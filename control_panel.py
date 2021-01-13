@@ -20,7 +20,7 @@ class ModelPanel(object):
         # simulation parameters-----------------------------------------------------------------------------------------
         self.WARM_UP_PERIOD = 3000    # warm-up period simulation model
         self.RUN_TIME = 10000         # run time simulation model
-        self.NUMBER_OF_RUNS = 1#00     # number of replications
+        self.NUMBER_OF_RUNS = 10#00     # number of replications
 
         # Manufacturing process and order characteristics---------------------------------------------------------------
         self.NUMBER_OF_WORKCENTRES = 6
@@ -176,9 +176,9 @@ class PolicyPanel(object):
         self.PRD_k = 6  # Factor K for PRD calculations
 
         # release control method
-        self.release_control = False  # self.params_list[self.experiment_number][0]
+        self.release_control = True
         self.release_norm = 5
-        self.release_control_method = "LUMS_COR"  # "control-novel-beta" #self.params_list[self.experiment_number][3]
+        self.release_control_method = "LUMS_COR"
 
         # LUMS COR
         self.check_period = 4.0  # Periodic release time
@@ -194,6 +194,7 @@ class PolicyPanel(object):
         """
         # Dispatching rules
         self.dispatching_rule = "FCFS"  # "SPT"
+        self.dispatching_mode = "automatic"  # customized
         self.ODD_k = 7
 
 

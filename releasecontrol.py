@@ -3,7 +3,7 @@ Project: ProcessSim
 Made By: Arno Kasper
 Version: 1.0.0
 """
-
+from operator import itemgetter
 
 class ReleaseControl(object):
     def __init__(self, simulation):
@@ -34,10 +34,8 @@ class ReleaseControl(object):
         # release mechanisms
         if self.sim.policy_panel.release_control_method == "LUMS_COR":
             # feedback mechanism for continuous release
-            if len(self.sim.model_panel.MANUFACTURING_FLOOR[order.routing_sequence[0]].queue) + \
-                    len(self.sim.model_panel.MANUFACTURING_FLOOR[order.routing_sequence[0]].users) \
-                    <= self.sim.policy_panel.continuous_trigger:
-                work_center = order.routing_sequence[0]
+            work_center = order.routing_sequence[0]
+            if self.control_queue_empty(work_center=work_center):
                 order.process = self.sim.env.process(
                     self.sim.release_control.continuous_trigger(work_center=work_center))
         elif self.sim.policy_panel.release_control_method == "pure_continuous":
@@ -47,6 +45,16 @@ class ReleaseControl(object):
         elif self.sim.policy_panel.release_control_method == "CONLOAD":
             order.process = self.sim.env.process(self.sim.release_control.CONLOAD())
         return
+
+    def control_queue_empty(self, work_center):
+        """
+        controls if the queue is empty
+        :param: work_center:
+        :return: bool
+        """
+        in_system = len(self.sim.model_panel.ORDER_QUEUES[work_center].items) + \
+                    len(self.sim.model_panel.MANUFACTURING_FLOOR[work_center].users)
+        return in_system <= self.sim.policy_panel.continuous_trigger
 
     def remove_from_pool(self, release_now):
         """
@@ -60,7 +68,6 @@ class ReleaseControl(object):
         # Remove the orders from the pool by filtering the item that needs to go out the pool
         released_used = yield self.pool.get(lambda released_used: released_used[0].identifier == identifier)
 
-    # WLC: periodic release  -------------------------------------------------------------------------------------------
     def periodic_release(self):
         """
         Workload Control Periodic release using aggregate load. See workings in Land 2004.
@@ -77,7 +84,7 @@ class ReleaseControl(object):
 
             # Sequence the orders currently in the pool
             if not self.sim.policy_panel.sequencing_rule == "FCFS":
-                self.pool.items.sort(key=lambda jobs: jobs[1])
+                self.pool.items.sort(key=itemgetter(1))
 
             # Contribute the load from each item in the pool
             for job in range(0, len(self.pool.items)):
@@ -126,7 +133,7 @@ class ReleaseControl(object):
 
         # Sequence the orders currently in the pool
         if not self.sim.policy_panel.sequencing_rule == "FCFS":
-            self.pool.items.sort(key=lambda jobs: jobs[1])
+            self.pool.items.sort(key=itemgetter(1))
 
         # Contribute the load from each item in the pool
         for job in range(0, len(self.pool.items)):
@@ -171,27 +178,27 @@ class ReleaseControl(object):
         Part of LUMS COR
         """
         while True:
-            # Empty the release list
+            # empty the release list
             release_now = []
             trigger = 1
-            # Sort orders in the pool
+            # sort orders in the pool
             if not self.sim.policy_panel.sequencing_rule == "FCFS":
-                self.pool.items.sort(key=lambda jobs: jobs[1])
+                self.pool.items.sort(key=itemgetter(1))
 
-            # Control if there is any order available for the starving work centre from all items in the pool
+            # control if there is any order available for the starving work centre from all items in the pool
             for job in range(0, len(self.pool.items)):
                 order = self.pool.items[job][0]
 
-                # If there is an order available, than it can be released
+                # if there is an order available, than it can be released
                 if order.routing_sequence[0] == work_center and trigger == 1:
                     trigger += 1
                     self.sim.data_run.ContLUMSCORCounter += 1
-                    # Contribute the load to the workload measures
+                    # contribute the load to the workload measures
                     for WC in order.routing_sequence:
                         self.sim.model_panel.RELEASED[WC] += order.process_time[WC] / (
                                 order.routing_sequence.index(WC) + 1)
                         order.release = True
-                        # If an order turned out to be released, it is send to be removed from the pool
+                        # if an order turned out to be released, it is send to be removed from the pool
                     if order.release:
                         order.continuous_trigger = True
 
@@ -214,8 +221,7 @@ class ReleaseControl(object):
         :param work_center:
         """
         # control the if the the amount of orders in or before the work centre is equal or less than one
-        if len(order.work_center_RQ.queue) + len(
-                order.work_center_RQ.users) <= self.sim.policy_panel.continuous_trigger:
+        if self.control_queue_empty(work_center=work_center):
             self.sim.env.process(self.sim.release_control.continuous_trigger(work_center=work_center))
 
     def CONWIP(self):
@@ -228,7 +234,7 @@ class ReleaseControl(object):
 
             # Sequence the orders currently in the pool
             if not self.sim.policy_panel.sequencing_rule == "FCFS":
-                self.pool.items.sort(key=lambda jobs: jobs[1])
+                self.pool.items.sort(key=itemgetter(1))
 
             # Contribute the load from each item in the pool
             for job in range(0, len(self.pool.items)):
@@ -273,7 +279,7 @@ class ReleaseControl(object):
 
             # Sequence the orders currently in the pool
             if not sim.policy_panel.sequencing_rule == "FCFS":
-                self.pool.items.sort(key=lambda jobs: jobs[1])
+                self.pool.items.sort(key=itemgetter(1))
 
             # Contribute the load from each item in the pool
             for job in range(0, len(self.pool.items)):

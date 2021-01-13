@@ -14,9 +14,14 @@ class Process(object):
         """
         self.sim = simulation
         self.dispatching_rule = self.sim.policy_panel.dispatching_rule
-        self.dispatching_mode = "automatic"  # customized
+        self.dispatching_mode = self.sim.policy_panel.dispatching_mode
 
     def put_in_queue(self, order):
+        """
+        controls if an order can immediately be send to a capacity source or needs to be put in the queue.
+        :param order:
+        :return:
+        """
         if order.first_entry:
             # first time entering the floor
             order.release_time = self.sim.env.now
@@ -29,27 +34,43 @@ class Process(object):
         if len(self.sim.model_panel.MANUFACTURING_FLOOR[work_center].users) == 0:
             if len(self.sim.model_panel.ORDER_QUEUES[work_center].items) == 0:
                 order.process = self.sim.env.process(
-                    self.sim.process.manufacturing_process(order=order, work_center=work_center))
+                    self.sim.process.capacity_process(order=order, work_center=work_center))
             else:
                 # put back into the queue
-                queue_item = self.queue_list(order=order)
+                queue_item = self.queue_item(order=order)
                 self.sim.model_panel.ORDER_QUEUES[work_center].put(queue_item)
                 self.dispatch_order(work_center=work_center)
                 return
         # put in the queue
         else:
             # put back into the queue
-            queue_item = self.queue_list(order=order)
+            queue_item = self.queue_item(order=order)
             yield self.sim.model_panel.ORDER_QUEUES[work_center].put(queue_item)
             return
 
     def release_from_queue(self, work_center):
+        """
+        removes an order from the queue
+        :param work_center:
+        :return:
+        """
         # sort the queue
         self.sim.model_panel.ORDER_QUEUES[work_center].items.sort(key=itemgetter(3))
         released_used = self.sim.model_panel.ORDER_QUEUES[work_center].get()
         return
 
-    def queue_list(self, order):
+    def queue_item(self, order):
+        """
+        make a list of attributes that needs ot be put into the queue
+        :param order: queue_item
+        :return:
+
+        Key for the order list
+        0: order object
+        1: dispatching priority
+        2: next step
+        3: release index
+        """
         # select dispatching rule
         if self.dispatching_rule == "FCFS":
             order.dispatching_priority = order.identifier
@@ -71,20 +92,32 @@ class Process(object):
         return queue_item
 
     def dispatch_order(self, work_center):
+        """
+        Dispatch the order with the highest priority to the capacity source
+        :param work_center:
+        :return:
+        """
         # get new order for release
         order_list, break_loop, free_load = self.get_most_urgent_order(work_center=work_center)
+
         # no orders in queue
         if break_loop:
             return
 
+        # get the order object
         order = order_list[0]
 
         self.release_from_queue(work_center=order.routing_sequence[0])
         order.process = self.sim.env.process(
-            self.sim.process.manufacturing_process(order=order, work_center=order.routing_sequence[0]))
+            self.sim.process.capacity_process(order=order, work_center=order.routing_sequence[0]))
         return
 
     def get_most_urgent_order(self, work_center):
+        """
+        update all priorities and routing steps in the queue
+        :param work_center:
+        :return: order, boolean: break_loop, boolean: free_load
+        """
         # setup params
         priority_list = list()
 
@@ -113,13 +146,19 @@ class Process(object):
         order[3] = 0
         return order, False, True
 
-    def manufacturing_process(self, order, work_center):
+    def capacity_process(self, order, work_center):
+        """
+        the process with capacity sources
+        :param order:
+        :param work_center:
+        :return: void
+        """
         # set params
         order.work_center_RQ = self.sim.model_panel.MANUFACTURING_FLOOR[work_center]
         req = order.work_center_RQ.request(priority=order.dispatching_priority)
         req.self = order
 
-        # Yield a request
+        # yield a request
         with req as req:
             yield req
             # Request is finished, order is put into the que or directly processed
@@ -149,12 +188,24 @@ class Process(object):
         return
 
     def data_collection_intermediate(self, order, work_center):
+        """
+        collect data between routing steps
+        :param order:
+        :param work_center:
+        :return: void
+        """
         order.order_start_time[work_center] = self.sim.env.now - order.process_time[work_center]
         order.proc_finished_time[work_center] = self.sim.env.now
         order.queue_time[work_center] = order.order_start_time[work_center] - order.queue_entry_time[work_center]
         return
 
     def data_collection_final(self, order):
+        """
+        collect data finished order
+        :param order:
+        :param work_center:
+        :return: void
+        """
         # Time collection registration
         order.finishing_time = self.sim.env.now
         self.sim.data_run.order_output_counter += 1
