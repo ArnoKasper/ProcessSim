@@ -13,6 +13,6 @@ can download packages manually.
 | `simpy` | 4.0.1 |
 
 ## Use
-The model settings can be changes are stored in `control_pannel.py`. That file includes two classes. The first class `ModelPanel` contains the basic settigns which cannot be changed during simulations. The second class `PolicyPanel` are options which can be changed at any point during the simulation. Alternativly, one can specificy additional functionality in `customized_settings.py` and aplly the setting Customized in the correct settingsfields in `control_pannel.py`. 
+The model settings can be changes are stored in `control_panel.py`. That file includes two classes. The first class `ModelPanel` contains the basic settigns which cannot be changed during simulations. The second class `PolicyPanel` are options which can be changed at any point during the simulation. Alternativly, one can specificy additional functionality in `customized_settings.py` and aplly the setting Customized in the correct settingsfields in `control_panel.py`. 
 
 ## Documentation
