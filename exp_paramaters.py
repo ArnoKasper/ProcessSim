@@ -1,11 +1,8 @@
-""""
-Made by: Arno Kasper
-Version 1.0
-Date 07/03/2020
-
-- Corrected and validated
 """
-
+Project: ProcessSim
+Made By: Arno Kasper
+Version: 1.0.0
+"""
 # range for each variable
 Exp_var_1 = [*range(3, 21, 3)]
 Exp_var_2 = [*(range(70, 85, 5))]

@@ -1,6 +1,12 @@
-### Import files -------------------------------------------------------------------------------------------------------
-import exp_manager as exp_manager
+"""
+Project: ProcessSim
+Made By: Arno Kasper
+Version: 1.0.0
+"""
+
+import exp_manager
 import time
+
 # Track run time
 start_time = time.time()
 

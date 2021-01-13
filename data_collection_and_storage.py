@@ -1,17 +1,20 @@
+"""
+Project: ProcessSim
+Made By: Arno Kasper
+Version: 1.0.0
+"""
 import statistics
-import math
 import numpy as np
 import pandas as pd
 
 class Data_Storage_Run(object):
     def __init__(self, sim):
-        self = self
         self.sim = sim
 
         # General data
         self.Run = list()
         self.Number = 0  # Number of Orders processed
-        self.StationNumber = [0] * len(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT)  # Number of Orders processed on each station
+        self.StationNumber = [0] * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
         self.CalculateUtiliz = 0  # Utilization machine
 
         # Throughput Time measures
@@ -23,7 +26,7 @@ class Data_Storage_Run(object):
         self.StationGrossThroughputTime = dict()
         self.Stationpooltime = dict()
         self.StationThroughputTime = dict()
-        for i, WC in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT):
+        for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
             self.StationGrossThroughputTime[WC] = list()
             self.Stationpooltime[WC] = list()
             self.StationThroughputTime[WC] = list()
@@ -34,8 +37,8 @@ class Data_Storage_Run(object):
         self.NumberTardy = 0  # Counts the tardy orders
         self.Lateness = list()
 
-        if self.sim.model_pannel.CollectPeriodicData:
-            self.PeriodicData = [list()] * len(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT)
+        if self.sim.model_panel.CollectPeriodicData:
+            self.PeriodicData = [list()] * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
 
         self.ContLUMSCORCounter = 0
         self.QSCounter = 0
@@ -46,14 +49,13 @@ class Data_Storage_Run(object):
 #### Collection variables of each experiment ---------------------------------------------------------------------------
 class Data_Storage_Exp(object):
     def __init__(self, sim):
-        self = self
         self.sim = sim
 
         # general info
         self.order_input_counter = 0
         self.order_output_counter = 0
 
-        if self.sim.model_pannel.CollectBasicData:
+        if self.sim.model_panel.CollectBasicData:
             self.Dat_exp_run = list()
             self.Dat_exp_number_orders = list()
             self.Dat_expUtilization = list()
@@ -71,14 +73,14 @@ class Data_Storage_Exp(object):
             self.Dat_exp_ConLUMSCOR = list()
             self.Dat_exp_QSCounter = list()
 
-            if self.sim.model_pannel.CollectStationData:
+            if self.sim.model_panel.CollectStationData:
                 self.Run_StationGrossThroughputTime_mean_WC = dict()
                 self.Run_Stationpooltime_mean_WC = dict()
                 self.Run_StationThroughputTime_mean_WC = dict()
                 self.Run_StationGrossThroughputTime_var_WC = dict()
                 self.Run_StationThroughputTime_var_WC = dict()
 
-                for i, WC in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT):
+                for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
                     self.Run_StationGrossThroughputTime_mean_WC[WC] = list()
                     self.Run_Stationpooltime_mean_WC[WC] = list()
                     self.Run_StationThroughputTime_mean_WC[WC] = list()
@@ -86,7 +88,7 @@ class Data_Storage_Exp(object):
                     self.Run_StationThroughputTime_var_WC[WC] = list()
 
 
-        if self.sim.model_pannel.CollectFlowData:
+        if self.sim.model_panel.CollectFlowData:
             self.Dat_exp_flow_WC = list()
             self.Dat_exp_flow_MC = list()
             for i in range(0, 8):
@@ -97,19 +99,19 @@ class Data_Storage_Exp(object):
 
                 self.Dat_exp_flow_WC.append(list_wc)
 
-        if self.sim.model_pannel.CollectMachineData:
+        if self.sim.model_panel.CollectMachineData:
             self.MachineData = list()
-            self.list_tracking = [0] * self.sim.model_pannel.NUMBER_OF_MACHINES * len(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT)
+            self.list_tracking = [0] * self.sim.model_panel.NUMBER_OF_MACHINES * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
             self.previous_time = 0
 
-        if self.sim.model_pannel.CollectPeriodicData:
-            self.PeriodicData = [[]] * len(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT)
+        if self.sim.model_panel.CollectPeriodicData:
+            self.PeriodicData = [[]] * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
 
-        if self.sim.model_pannel.CollectDiscreteData:
+        if self.sim.model_panel.CollectDiscreteData:
             self.discrete_data = pd.DataFrame({"value": [*range(-50, 301)]})
             self.discrete_data["count"] = 0
 
-        if self.sim.model_pannel.CollectOrderData:
+        if self.sim.model_panel.CollectOrderData:
             self.variable_1 = list()
             self.variable_2 = list()
             self.variable_3 = list()
@@ -159,11 +161,11 @@ class Data_Collection(object):
 
         # Results are stored for this run-------------------------------------------------------------------------------
         # General results
-        Run_experiment_run = (int(self.sim.env.now / (self.sim.model_pannel.WARM_UP_PERIOD + self.sim.model_pannel.RUN_TIME)))
+        Run_experiment_run = (int(self.sim.env.now / (self.sim.model_panel.WARM_UP_PERIOD + self.sim.model_panel.RUN_TIME)))
         Run_number_orders = self.sim.data_run.Number
 
-        number_of_machines_in_process = (self.sim.model_pannel.NUMBER_OF_MACHINES * len(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT))
-        Run_Utilization = ((self.sim.data_run.CalculateUtiliz * 100 / number_of_machines_in_process) / self.sim.model_pannel.RUN_TIME)
+        number_of_machines_in_process = (self.sim.model_panel.NUMBER_OF_MACHINES * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT))
+        Run_Utilization = ((self.sim.data_run.CalculateUtiliz * 100 / number_of_machines_in_process) / self.sim.model_panel.RUN_TIME)
 
         # Throughput Time measures (GENERAL)
         # Means
@@ -176,8 +178,8 @@ class Data_Collection(object):
         Run_ThroughputTime_var = statistics.variance(self.sim.data_run.ThroughputTime)
 
         # Throughput Time measures (STATION)
-        if self.sim.model_pannel.CollectStationData:
-            for i, WC in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT):
+        if self.sim.model_panel.CollectStationData:
+            for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
                 Run_StationGrossThroughputTime_mean[WC] = list()
                 Run_Stationpooltime_mean[WC] = list()
                 Run_StationThroughputTime_mean[WC] = list()
@@ -220,8 +222,8 @@ class Data_Collection(object):
         self.sim.data_exp.Dat_exp_ConLUMSCOR.append(self.sim.data_run.ContLUMSCORCounter)
         self.sim.data_exp.Dat_exp_QSCounter.append(self.sim.data_run.QSCounter)
 
-        if self.sim.model_pannel.CollectStationData:
-            for i, WC in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT):
+        if self.sim.model_panel.CollectStationData:
+            for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
                 self.sim.data_exp.Run_StationGrossThroughputTime_mean_WC[WC].append(Run_StationGrossThroughputTime_mean[WC])
                 self.sim.data_exp.Run_Stationpooltime_mean_WC[WC].append(Run_Stationpooltime_mean[WC])
                 self.sim.data_exp.Run_StationThroughputTime_mean_WC[WC].append(Run_StationThroughputTime_mean[WC])
@@ -229,16 +231,16 @@ class Data_Collection(object):
                 self.sim.data_exp.Run_StationThroughputTime_var_WC[WC].append(Run_StationThroughputTime_var[WC])
         return
 
-    def perodic_data_collection(self, sim):
+    def periodic_data_collection(self, sim):
         while True:
-            # yield a timeout every peridic time interval
-            yield sim.env.timeout(sim.model_pannel.CollectPeriodicData_timeinterval)
+            # yield a timeout every periodic time interval
+            yield sim.env.timeout(sim.model_panel.CollectPeriodicData_time_interval)
             i = 0
-            for WC in sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT:
-                Workload = sim.model_pannel.RELEASED[WC] - sim.model_pannel.PROCESSED[WC]
-                sim.model_pannel.PeriodicData[i].append(Workload)
+            for WC in sim.model_panel.MANUFACTURING_FLOOR_LAYOUT:
+                workload = sim.model_panel.RELEASED[WC] - sim.model_panel.PROCESSED[WC]
+                sim.model_panel.PeriodicData[i].append(workload)
                 i += 1
-            if sim.env.now >= (sim.model_pannel.WARM_UP_PERIOD + sim.model_pannel.RUN_TIME) * sim.model_pannel.NUMBER_OF_RUNS:
+            if sim.env.now >= (sim.model_panel.WARM_UP_PERIOD + sim.model_panel.RUN_TIME) * sim.model_panel.NUMBER_OF_RUNS:
                 break
 
     def flow_data_collection(self, order, sim):
@@ -268,7 +270,7 @@ class Data_Collection(object):
 
     def machine_data_collection(self, order):
         sim.data_exp.MachineData.append(self.sim.data_exp.list_tracking)
-        sim.data_exp.list_tracking = [0] * self.sim.model_pannel.NUMBER_OF_MACHINES * len(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT)
+        sim.data_exp.list_tracking = [0] * self.sim.model_panel.NUMBER_OF_MACHINES * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
 
         for a in range(0, (len(order.routing_sequence_data))):
             string_WC = order.routing_sequence_data[a]
@@ -317,20 +319,20 @@ class Data_Collection(object):
         # workload data
         load_direct = 0
         # get load in queue
-        for j, WorkCentre in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT):
+        for j, WorkCentre in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
             # the single queue
-            if self.sim.model_pannel.queue_configuration == "SQ" or self.sim.model_pannel.queue_configuration == "SM":
+            if self.sim.model_panel.queue_configuration == "SQ" or self.sim.model_panel.queue_configuration == "SM":
                 #for i, order_queue in enumerate(self.sim.model_pannel.ORDER_POOL[WorkCentre].items):
                 #    load_direct += order_queue[0].process_time[WorkCentre]
-                for i, order_queue in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCentre].queue):
+                for i, order_queue in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR[WorkCentre].queue):
                     load_direct += order_queue.self.process_time[WorkCentre]
                  # get the load from work centre user
-                if len(self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCentre].users) > 0:
-                    load_direct += self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCentre].users[0].self.process_time[WorkCentre]
+                if len(self.sim.model_panel.MANUFACTURING_FLOOR[WorkCentre].users) > 0:
+                    load_direct += self.sim.model_panel.MANUFACTURING_FLOOR[WorkCentre].users[0].self.process_time[WorkCentre]
 
             # the multi queue
-            elif self.sim.model_pannel.queue_configuration == "MQ":
-                for _, Machine in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCentre]):
+            elif self.sim.model_panel.queue_configuration == "MQ":
+                for _, Machine in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR[WorkCentre]):
                     for _ , order_queue in enumerate(Machine.queue):
                         load_direct += order_queue.self.process_time[WorkCentre]
                     # get the load from work centre user
@@ -338,7 +340,7 @@ class Data_Collection(object):
                         load_direct += Machine.users[0].self.process_time[WorkCentre]
 
         # append the list
-        if self.sim.model_pannel.queue_configuration == "SM":
+        if self.sim.model_panel.queue_configuration == "SM":
             load_direct = load_direct * 2
 
         self.sim.data_exp.variable_3.append(load_direct)
@@ -353,7 +355,7 @@ class Data_Collection(object):
         sim.data_exp.Dat_exp_Lateness_mean.extend(sim.data_run.Lateness)
 
         # Add all the work centre specific information
-        for i, WC in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT):
+        for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
             sim.data_exp.Run_StationGrossThroughputTime_mean_WC1.extend(sim.data_run.StationGrossThroughputTime[i])
             sim.data_exp.Run_Stationpooltime_mean_WC1.extend(sim.data_run.Stationpooltime[i])
             sim.data_exp.Run_StationThroughputTime_mean_WC1.extend(sim.data_run.StationThroughputTime[i])

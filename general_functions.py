@@ -1,6 +1,9 @@
-import math
+"""
+Project: ProcessSim
+Made By: Arno Kasper
+Version: 1.0.0
+"""
 
-#### General functions -------------------------------------------------------------------------------------------------
 class General_Functions(object):
 
     def __init__(self):
@@ -39,20 +42,20 @@ class General_Functions(object):
     # ___Generate process times with LogNormal distribution
     def log_normal_truncated(self, sim):
         # find out if the distribution is truncated
-        if sim.model_pannel.TRUNCATION_POINT_PROCESS_TIME == "inf":
-            stddev_log = self.stddev_dictonary_inf[sim.model_pannel.STD_DEV_PROCESS_TIME]
-            mean_log = self.mean_dictonary_inf[sim.model_pannel.STD_DEV_PROCESS_TIME]
+        if sim.model_panel.TRUNCATION_POINT_PROCESS_TIME == "inf":
+            stddev_log = self.stddev_dictonary_inf[sim.model_panel.STD_DEV_PROCESS_TIME]
+            mean_log = self.mean_dictonary_inf[sim.model_panel.STD_DEV_PROCESS_TIME]
             ReturnValue = sim.random_generator_1.lognormvariate(mean_log, stddev_log)
 
         else:
         # ensure the accurate distribution due to truncation cut-off
-            if sim.model_pannel.TRUNCATION_POINT_PROCESS_TIME == 8:
+            if sim.model_panel.TRUNCATION_POINT_PROCESS_TIME == 8:
                 truncation_dictionary = {0.5: 24.66,
                                         1: 33.83,
                                         1.5: 44.25,
                                         2: 51.58,
                                         2.5: 80}
-                truncation_point = truncation_dictionary[sim.model_pannel.STD_DEV_PROCESS_TIME]
+                truncation_point = truncation_dictionary[sim.model_panel.STD_DEV_PROCESS_TIME]
 
             else:
                 raise Exception('No Truncation Dictionary Available for this truncation point')
@@ -60,22 +63,22 @@ class General_Functions(object):
             # obtain process time
             ReturnValue = 100
             while ReturnValue > truncation_point:
-                ReturnValue = sim.random_generator_1.lognormvariate(sim.model_pannel.MEAN_PROCESS_TIME, sim.model_pannel.STD_DEV_PROCESS_TIME)
+                ReturnValue = sim.random_generator_1.lognormvariate(sim.model_panel.MEAN_PROCESS_TIME, sim.model_panel.STD_DEV_PROCESS_TIME)
 
             # manipulate process time
-            ReturnValue = ReturnValue * (sim.model_pannel.TRUNCATION_POINT_PROCESS_TIME / truncation_point)
+            ReturnValue = ReturnValue * (sim.model_panel.TRUNCATION_POINT_PROCESS_TIME / truncation_point)
         return ReturnValue
 
     # ___Generate process times with 2-Erlang distribution
     def two_erlang_truncated(self, sim):
         mean_process_time_adj = 0
-        if sim.model_pannel.TRUNCATION_POINT_PROCESS_TIME == 4:
+        if sim.model_panel.TRUNCATION_POINT_PROCESS_TIME == 4:
             mean_process_time_adj = 1.975
         else:
             raise Exception('No truncation dictionary available for this truncation point')
 
         returnValue = 100
-        while returnValue > sim.model_pannel.TRUNCATION_POINT_PROCESS_TIME:
+        while returnValue > sim.model_panel.TRUNCATION_POINT_PROCESS_TIME:
             returnValue = sim.random_generator_1.expovariate(mean_process_time_adj) + \
                           sim.random_generator_1.expovariate(mean_process_time_adj)
         return returnValue
@@ -83,21 +86,21 @@ class General_Functions(object):
     #### Due Date Methods ----------------------------------------------------------------------------------------------
     # ___ Allowcate random due date to order
     def random_value_DD(self, sim):
-        ReturnValue = sim.env.now + sim.random_generator_2.uniform(sim.policy_pannel.RVminmax[0], sim.policy_pannel.RVminmax[1])
+        ReturnValue = sim.env.now + sim.random_generator_2.uniform(sim.policy_panel.RVminmax[0], sim.policy_panel.RVminmax[1])
         return ReturnValue
 
     # ___ Allowcate  due date to order using the factor K formula
     def factor_K_DD(self, order, sim):
-        Returnvalue = sim.env.now + (order.process_time_cumulative + (sim.policy_pannel.FactorKValue * len(order.routing_sequence)))
+        Returnvalue = sim.env.now + (order.process_time_cumulative + (sim.policy_panel.FactorKValue * len(order.routing_sequence)))
         return Returnvalue
 
     # ___ Allowcate  due date to order by adding a constant
     def add_contant_DD(self, order, sim):
-        Returnvalue = sim.env.now + (order.process_time_cumulative + sim.policy_pannel.AddContantDDValue)
+        Returnvalue = sim.env.now + (order.process_time_cumulative + sim.policy_panel.AddContantDDValue)
         return Returnvalue
 
     def total_work_content(self, order, sim):
-        Returnvalue = sim.env.now + (order.process_time_cumulative * sim.policy_pannel.total_work_content_value)
+        Returnvalue = sim.env.now + (order.process_time_cumulative * sim.policy_panel.total_work_content_value)
         return Returnvalue
 
     #### Due Date Methods ----------------------------------------------------------------------------------------------
@@ -111,135 +114,45 @@ class General_Functions(object):
                 order.ODDs[WC] = sim.env.now
         return
 
-    def MODD_load_control(self, sim, order, WorkCenter):
+    def MODD_load_control(self, sim, order, workcenter):
         # do it for a single machine or queue configuration
-        if sim.model_pannel.queue_configuration == "SQ" \
-                or sim.model_pannel.queue_configuration == "SM":
+        if sim.model_panel.queue_configuration == "SQ" \
+                or sim.model_panel.queue_configuration == "SM":
             # get the orders from the queue
-            for i, order_queue in enumerate(order.WorkCenterRQ.queue):
-                order_queue.priority = max(sim.env.now + order_queue.order.process_time[WorkCenter], order_queue.priority)
-                order_queue.order.dispatching_priority = max(sim.env.now + order_queue.order.process_time[WorkCenter], order_queue.priority)
+            for i, order_queue in enumerate(order.workcenterRQ.queue):
+                order_queue.priority = max(sim.env.now + order_queue.order.process_time[workcenter], order_queue.priority)
+                order_queue.order.dispatching_priority = max(sim.env.now + order_queue.order.process_time[workcenter], order_queue.priority)
             # sort the queue
-            order.WorkCenterRQ.queue.sort(key=lambda order_queue: order_queue.priority)
+            order.workcenterRQ.queue.sort(key=lambda order_queue: order_queue.priority)
 
         # do it for a multi queue configuration
-        elif sim.model_pannel.queue_configuration == "MQ":
-            for j, machine in enumerate(sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter]):
-                for i, order_queue in enumerate(sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][j].queue):
-                    if sim.policy_pannel.dispatching_rule == "MODD":
+        elif sim.model_panel.queue_configuration == "MQ":
+            for j, machine in enumerate(sim.model_panel.MANUFACTURING_FLOOR[workcenter]):
+                for i, order_queue in enumerate(sim.model_panel.MANUFACTURING_FLOOR[workcenter][j].queue):
+                    if sim.policy_panel.dispatching_rule == "MODD":
                         # for dispatching rule
-                        if sim.env.now + order_queue.self.process_time[WorkCenter] > order_queue.priority:
-                            order_queue.priority = sim.env.now + order_queue.self.process_time[WorkCenter]
-                            order_queue.self.dispatching_priority = sim.env.now + order_queue.self.process_time[WorkCenter]
+                        if sim.env.now + order_queue.self.process_time[workcenter] > order_queue.priority:
+                            order_queue.priority = sim.env.now + order_queue.self.process_time[workcenter]
+                            order_queue.self.dispatching_priority = sim.env.now + order_queue.self.process_time[workcenter]
 
                     # for queue switching rule
-                    if sim.policy_pannel.queue_switching_rule == "SQ-MODD":
-                        if sim.env.now + order_queue.self.process_time[WorkCenter] > order_queue.self.qs_priority:
-                            order_queue.self.qs_priority = sim.env.now + order_queue.self.process_time[WorkCenter]
+                    if sim.policy_panel.queue_switching_rule == "SQ-MODD":
+                        if sim.env.now + order_queue.self.process_time[workcenter] > order_queue.self.qs_priority:
+                            order_queue.self.qs_priority = sim.env.now + order_queue.self.process_time[workcenter]
 
-                    elif sim.policy_pannel.queue_switching_rule == "SQ-AMODD":
-                        if (sim.env.now + order_queue.self.process_time[WorkCenter] + sim.policy_pannel.AMODD_slack) > (order_queue.self.ODDs[WorkCenter]):
-                            order_queue.self.qs_priority = sim.env.now + order_queue.self.process_time[WorkCenter]
+                    elif sim.policy_panel.queue_switching_rule == "SQ-AMODD":
+                        if (sim.env.now + order_queue.self.process_time[workcenter] + sim.policy_panel.AMODD_slack) > (order_queue.self.ODDs[workcenter]):
+                            order_queue.self.qs_priority = sim.env.now + order_queue.self.process_time[workcenter]
                 # sort the queue
-                sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][j].queue.sort(key=lambda order_queue: order_queue.priority)
+                sim.model_panel.MANUFACTURING_FLOOR[workcenter][j].queue.sort(key=lambda order_queue: order_queue.priority)
         return
 
-    def ODD_SPT_dispacthing(self, order, WorkCenter):
+    def ODD_SPT_dispacthing(self, order, workcenter):
         # the ODD lane
         if order.WCNumber == 0:
-            order.dispatching_priority = order.ODDs[WorkCenter]
+            order.dispatching_priority = order.ODDs[workcenter]
 
         # the SPT lane
         elif order.WCNumber == 1:
-            order.dispatching_priority = order.process_time[WorkCenter]
+            order.dispatching_priority = order.process_time[workcenter]
         return
-
-class Machine_Selection_Rule(object):
-
-    def __init__(self, sim):
-        self.sim = sim
-        self.threshold = math.exp(abs(self.sim.general_functions.mean_dictonary_inf[self.sim.model_pannel.STD_DEV_PROCESS_TIME]))
-
-    def machine_selection_rule(self, WorkCenter, order):
-        if self.sim.policy_pannel.machine_selection_rule == "ALT":
-            self.alternately_machine_selection(WorkCenter, order)
-
-        elif self.sim.policy_pannel.machine_selection_rule == "LWQ":
-            self.lowest_workload_queue(WorkCenter, order)
-
-        elif self.sim.policy_pannel.machine_selection_rule == "PTS":
-            self.process_time_allocation(WorkCenter, order)
-
-        elif self.sim.policy_pannel.machine_selection_rule == "MODD-S":
-            self.modd_machine_selection(WorkCenter, order)
-
-        elif self.sim.policy_pannel.machine_selection_rule == "SQ-TRICK":
-            order.WorkCenterRQ = self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][0]
-            order.WCNumber = 0
-
-        else:
-            raise Exception('No Machine selection rule is selected')
-
-    def alternately_machine_selection(self, WorkCenter, order):
-        # set params
-        machine = 0
-
-        # find the lowest number allocated in queue
-        min_value = min(float(value) for value in self.sim.model_pannel.ALTMachineSelectDict[WorkCenter])
-
-        # select a machine to send the queue to
-        for i in range(0, self.sim.model_pannel.NUMBER_OF_MACHINES):
-            if min_value == self.sim.model_pannel.ALTMachineSelectDict[WorkCenter][i]:
-                machine = i
-                break
-
-        # bind the selected machine to the order
-        order.WorkCenterRQ = self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][machine]
-        order.WCNumber = machine
-        self.sim.model_pannel.ALTMachineSelectDict[WorkCenter][machine] += order.process_time[WorkCenter]
-        return
-
-    def lowest_workload_queue(self, WorkCenter, order):
-        # set params
-        machine = 0
-
-        # find the lowest workload allocated in queue
-        min_value = min(float(value) for value in self.sim.model_pannel.LWQMachineSelectDict[WorkCenter])
-        for i in range(0, self.sim.model_pannel.NUMBER_OF_MACHINES):
-            if min_value == self.sim.model_pannel.LWQMachineSelectDict[WorkCenter][i]:
-                machine = i
-                break
-
-        # bind the selected machine to the order
-        order.WorkCenterRQ = self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][machine]
-        order.WCNumber = machine
-        self.sim.model_pannel.LWQMachineSelectDict[WorkCenter][machine] += order.process_time[WorkCenter]
-        return
-
-    def process_time_allocation(self, WorkCenter, order):
-        # threshold is median
-
-        # only works for a 2 machines
-        if order.process_time[WorkCenter] < self.threshold:
-            order.WorkCenterRQ = self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][0]
-            order.WCNumber = 0
-            return
-
-        elif order.process_time[WorkCenter] > self.threshold:
-            order.WorkCenterRQ = self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][1]
-            order.WCNumber = 1
-            return
-
-    def modd_machine_selection(self, WorkCenter, order):
-        # the ODD lane
-        if self.sim.env.now + order.process_time[WorkCenter] < order.ODDs[WorkCenter]:
-            order.WorkCenterRQ = self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][0]
-            order.WCNumber = 0
-
-        # the SPT lane
-        elif self.sim.env.now + order.process_time[WorkCenter] >= order.ODDs[WorkCenter]:
-            order.WorkCenterRQ = self.sim.model_pannel.MANUFACTURING_FLOOR[WorkCenter][1]
-            order.WCNumber = 1
-
-
-

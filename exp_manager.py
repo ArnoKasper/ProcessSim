@@ -1,3 +1,8 @@
+"""
+Project: ProcessSim
+Made By: Arno Kasper
+Version: 1.0.0
+"""
 import pandas as pd
 import socket
 import random
@@ -6,50 +11,43 @@ import os
 
 import simulation_model as sim
 
-# Experiment manager ---------------------------------------------------------------------------------------------------
-class Experiment_Manager(object):
-    """"
-    Hierarchy:
-        __init__ (activated by the experiment management batch file)
-        def exp_manager(self)
-        def saving_exp(self):
 
-    """
+class Experiment_Manager(object):
+
     # Creat a batch of experiments with a upper an lower limit
     def __init__(self, lower, upper):
-        self.lower = lower  # Upper boundary of the exp number
-        self.upper = upper  # Lower boundary of the exp number
+        """
+        initialize experiments integers
+        :param lower: lower boundary of the exp number
+        :param upper: upper boundary of the exp number
+        """
+        self.lower = lower
+        self.upper = upper
         self.count_experiment = 0
         self.exp_manager()
 
-    # Define the Experiment manager who controls the simulation model---------------------------------------------------
     def exp_manager(self):
-        # Use a loop to illiterate multiple experiments from the exp_dat list-------------------------------------------
-        #   - the loop is used to spawn multiple experiments in sequence
+        """
+        define the experiment manager who controls the simulation model
+        :return: void
+        """
+        # use a loop to illiterate multiple experiments from the exp_dat list
         for i in range(self.lower, (self.upper + 1)):
-            # Activate Simulation experiment method
+            # activate Simulation experiment method
             self.sim = sim.Simulation_Model(i)
 
-            # Finish the experiment by saving the data and move on to the saving function
-            try:
-                if self.sim.model_pannel.project_name == "pp_02":
-                    exp_variable_list = self.name_exp()
-            except ValueError:
-                print("project name not defined, using project name")
-                exp_variable_list = self.sim.model_pannel.project_name
+            # finish the experiment by saving the data and move on to the saving function
+            exp_variable_list = self.sim.model_panel.project_name
 
-            # Save the experiment
+            # save the experiment
             self.saving_exp(exp_variable_list)
 
-    def name_exp(self):
-        # Define experimental variables to identify type of experiment and save it--------------------------------------
-        exp_variable_list = []
-        exp_variable_list.append(self.sim.policy_pannel.release_control_method)
-        exp_variable_list.append(self.sim.model_pannel.NUMBER_OF_WORKCENTRES)
-        exp_variable_list.append(self.sim.policy_pannel.total_work_content_value)
-        return exp_variable_list
-
     def saving_exp(self, exp_variable_list):
+        """
+        save all the experiment data versions
+        :param exp_variable_list:
+        :return:
+        """
         ##### Create a database-----------------------------------------------------------------------------------------
         # initialize params
         df_basic = []
@@ -58,7 +56,7 @@ class Experiment_Manager(object):
         df_machine_data = []
         df_periodic = []
 
-        if self.sim.model_pannel.CollectBasicData:
+        if self.sim.model_panel.CollectBasicData:
             df_basic = pd.DataFrame([
                 self.sim.data_exp.Dat_exp_run,
                 self.sim.data_exp.Dat_exp_number_orders,
@@ -96,35 +94,35 @@ class Experiment_Manager(object):
                 "Dat_exp_variable_1",
                 "Dat_exp_variable_2"]
 
-            if self.sim.model_pannel.CollectStationData:
+            if self.sim.model_panel.CollectStationData:
                 database_list = list()
                 # put in the first variable
-                for i, WC in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT):
+                for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
                     df_station = pd.DataFrame([
-                    self.sim.data_exp.Run_StationGrossThroughputTime_mean_WC[WC],
-                    self.sim.data_exp.Run_Stationpooltime_mean_WC[WC],
-                    self.sim.data_exp.Run_StationThroughputTime_mean_WC[WC],
-                    self.sim.data_exp.Run_StationGrossThroughputTime_var_WC[WC],
-                    self.sim.data_exp.Run_StationThroughputTime_var_WC[WC]
+                        self.sim.data_exp.Run_StationGrossThroughputTime_mean_WC[WC],
+                        self.sim.data_exp.Run_Stationpooltime_mean_WC[WC],
+                        self.sim.data_exp.Run_StationThroughputTime_mean_WC[WC],
+                        self.sim.data_exp.Run_StationGrossThroughputTime_var_WC[WC],
+                        self.sim.data_exp.Run_StationThroughputTime_var_WC[WC]
                     ])
                     df_station = df_station.transpose()
                     name_number = i + 1
                     df_station.columns = [
-                    "Run_StationQueueTime_mean_WC" + str(name_number),
-                    "Run_StationProcTime_mean_WC"+ str(name_number),
-                    "Run_StationQueueTime_var_WC"+ str(name_number),
-                    "Run_GrossQueueTime_var_WC"+ str(name_number),
-                    "Run_StationProcTime_var_WC"+ str(name_number),
-                        ]
+                        "Run_StationQueueTime_mean_WC" + str(name_number),
+                        "Run_StationProcTime_mean_WC" + str(name_number),
+                        "Run_StationQueueTime_var_WC" + str(name_number),
+                        "Run_GrossQueueTime_var_WC" + str(name_number),
+                        "Run_StationProcTime_var_WC" + str(name_number),
+                    ]
                     # put dataframe list
                     database_list.append(df_station)
-                for i, WC in enumerate(self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT):
+                for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
                     df_basic = pd.concat([df_basic, database_list[i]], axis=1)
             else:
                 df_basic = df_basic
 
-        if self.sim.model_pannel.CollectFlowData:
-            df_wc_flow = pd.DataFrame([self.sim.model_pannel.MANUFACTURING_FLOOR_LAYOUT,
+        if self.sim.model_panel.CollectFlowData:
+            df_wc_flow = pd.DataFrame([self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT,
                                        self.sim.data_exp.Dat_exp_flow_WC[0],
                                        self.sim.data_exp.Dat_exp_flow_WC[1],
                                        self.sim.data_exp.Dat_exp_flow_WC[2],
@@ -145,13 +143,13 @@ class Experiment_Manager(object):
                 "Machine 1",
                 "Machine 2"
             ]
-        if self.sim.model_pannel.CollectMachineData:
+        if self.sim.model_panel.CollectMachineData:
             df_machine_data = pd.DataFrame([self.sim.data_exp.MachineData[0]])
             for i in range(1, len(self.sim.data_exp.MachineData)):
                 between = pd.DataFrame([self.sim.data_exp.MachineData[i]])
                 df_machine_data = pd.concat([between, df_machine_data], ignore_index=True)
 
-        if self.sim.model_pannel.CollectPeriodicData:
+        if self.sim.model_panel.CollectPeriodicData:
             df_periodic = pd.DataFrame([self.sim.data_exp.PeriodicData[0]])
             for i in range(1, len(self.sim.data_exp.PeriodicData)):
                 between = pd.DataFrame([self.sim.data_exp.PeriodicData[i]])
@@ -166,10 +164,10 @@ class Experiment_Manager(object):
                 "WC5",
                 "WC6"
             ]
-        if self.sim.model_pannel.CollectOrderData:
+        if self.sim.model_panel.CollectOrderData:
             # create name string
             lenght_name = len(self.sim.data_exp.variable_1)
-            name_list = [self.sim.model_pannel.experiment_name]*lenght_name
+            name_list = [self.sim.model_panel.experiment_name] * lenght_name
             # put in dataframe
             df_order = pd.DataFrame([
                 name_list,
@@ -184,27 +182,8 @@ class Experiment_Manager(object):
                 "lateness",
                 "load"
             ]
-        if self.sim.model_pannel.AGENT_CONTROL:
-            if self.sim.agent.data_collection_mode:
-                # get the array
-                agent_result_array = self.sim.agent_data.state_array_agent
-                """
-                - Key
-                    - # orders in pool
-                    - # orders in manufacturing process
-                    - conwip level
-                    - cum proc time
-                    - tardiness
-                """
-                # convert array to dataframe and add names
-                df_agent_result = pd.DataFrame({'nr_pool': agent_result_array[:, 0],
-                                                'nr_man_process': agent_result_array[:, 1],
-                                                'conwip_level_w': agent_result_array[:, 2],
-                                                'var_proc_time': agent_result_array[:, 3],
-                                                'lateness': agent_result_array[:, 4],
-                                                'conwip_level_w_incumbent': agent_result_array[:, 5]
-                                             })
-        # Save file with custom name------------------------------------------------------------------------------------
+
+        # save file with custom name------------------------------------------------------------------------------------
         # get file directory
         path = self.get_directory()
 
@@ -215,7 +194,7 @@ class Experiment_Manager(object):
 
         save_list = []
 
-        if self.sim.model_pannel.CollectBasicData or self.sim.model_pannel.CollectStationData:
+        if self.sim.model_panel.CollectBasicData or self.sim.model_panel.CollectStationData:
             name_and_data_list = []
             save_exp_name = exp_name
 
@@ -225,8 +204,7 @@ class Experiment_Manager(object):
             # Put data frame and name in list
             save_list.append(name_and_data_list)
 
-
-        if self.sim.model_pannel.CollectFlowData:
+        if self.sim.model_panel.CollectFlowData:
             name_and_data_list = []
             save_exp_name = "FLOW_" + exp_name
 
@@ -236,7 +214,7 @@ class Experiment_Manager(object):
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
 
-        if self.sim.model_pannel.CollectOrderData:
+        if self.sim.model_panel.CollectOrderData:
             name_and_data_list = []
             save_exp_name = "ORDER_" + exp_name
 
@@ -246,7 +224,7 @@ class Experiment_Manager(object):
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
 
-        if self.sim.model_pannel.CollectMachineData:
+        if self.sim.model_panel.CollectMachineData:
             name_and_data_list = []
             save_exp_name = "MACHINE_" + exp_name
 
@@ -255,7 +233,7 @@ class Experiment_Manager(object):
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
 
-        if self.sim.model_pannel.CollectPeriodicData:
+        if self.sim.model_panel.CollectPeriodicData:
             name_and_data_list = []
             save_exp_name = "PERIODIC_" + exp_name
 
@@ -264,18 +242,8 @@ class Experiment_Manager(object):
 
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
-        if self.sim.model_pannel.AGENT_CONTROL:
-            if self.sim.agent.data_collection_mode:
-                name_and_data_list = []
-                save_exp_name = "AGENT_" + exp_name
 
-                name_and_data_list.append(save_exp_name)
-                name_and_data_list.append(df_agent_result)
-
-                # Put dataframe and name in list
-                save_list.append(name_and_data_list)
-
-        if self.sim.model_pannel.CollectDiscreteData:
+        if self.sim.model_panel.CollectDiscreteData:
             name_and_data_list = []
             save_exp_name = "DISCRETE_" + exp_name
 
@@ -285,8 +253,8 @@ class Experiment_Manager(object):
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
 
-        #### SAVE DATA #####--------------------------------------------------------------------------------------------
-        file_version = ".csv"# ".xlsx"#".csv"#
+        # save ---------------------------------------------------------------------------------------------------------
+        file_version = ".csv"  # ".xlsx"#".csv"#
 
         for i, name_and_data_list in enumerate(save_list):
             try:
@@ -304,7 +272,7 @@ class Experiment_Manager(object):
                 # failed to save, make a random addition to the name to save anyway
                 random_genetator = random.Random()
                 random_name = "random_"
-                strings = ['a',"tgadg", "daf", "da", "gt", "ada", "fs", "dt", "d", "as"]
+                strings = ['a', "tgadg", "daf", "da", "gt", "ada", "fs", "dt", "d", "as"]
                 name_lenght = random_genetator.randint(1, 14)
 
                 # build the name
@@ -325,16 +293,15 @@ class Experiment_Manager(object):
                     self.save_database_xlsx(file=file, database=df)
 
                 # notify the user
-                warnings.warn(f"Premission Error, saved with name {name_and_data_list[0] + random_name}", Warning)
+                warnings.warn(f"Permission Error, saved with name {name_and_data_list[0] + random_name}", Warning)
 
-
-        # Add the experiment number for the next experiment
+        # add the experiment number for the next experiment
         self.count_experiment += 1
 
         print(f"Simulation data saved with name:    {exp_name}")
-        #print(f"Simulation data saved with name:    {exp_name}"
-        #      f"\n\tINPUT THIS EXPERIMENT:      {self.sim.data_exp.order_input_counter}"
-        #      f"\n\tOUTPUT THIS EXPERIMENT:     {self.sim.data_exp.order_output_counter}\n\n")
+        if self.sim.print_info:
+            print(f"\n\tINPUT THIS EXPERIMENT:      {self.sim.data_exp.order_input_counter}")
+            print(f"\n\tOUTPUT THIS EXPERIMENT:     {self.sim.data_exp.order_output_counter}\n\n")
 
     def save_database_csv(self, file, database):
         database.to_csv(file, index=False)

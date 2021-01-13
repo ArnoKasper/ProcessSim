@@ -1,5 +1,8 @@
-#import exp_paramaters_report_summer_school as exp_dat
-
+"""
+Project: ProcessSim
+Made By: Arno Kasper
+Version: 1.0.0
+"""
 # Get the number of experiments from the experimental settings file
 NUMBER_EXP = 100 #len(exp_dat.experimental_params_list)
 MAX_NUMBER_JOBS = 1000
