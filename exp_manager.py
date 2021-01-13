@@ -300,8 +300,8 @@ class Experiment_Manager(object):
 
         print(f"Simulation data saved with name:    {exp_name}")
         if self.sim.print_info:
-            print(f"\n\tINPUT THIS EXPERIMENT:      {self.sim.data_exp.order_input_counter}")
-            print(f"\n\tOUTPUT THIS EXPERIMENT:     {self.sim.data_exp.order_output_counter}\n\n")
+            print(f"\tINPUT THIS EXPERIMENT:      {self.sim.data_exp.order_input_counter}")
+            print(f"\tOUTPUT THIS EXPERIMENT:     {self.sim.data_exp.order_output_counter}")
 
     def save_database_csv(self, file, database):
         database.to_csv(file, index=False)

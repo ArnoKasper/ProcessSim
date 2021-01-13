@@ -4,6 +4,7 @@ Made By: Arno Kasper
 Version: 1.0.0
 """
 
+
 class ReleaseControl(object):
     def __init__(self, simulation):
         self.sim = simulation
@@ -22,7 +23,7 @@ class ReleaseControl(object):
         elif self.sim.policy_panel.sequencing_rule == "PRD":
             Seq_Priority = order.PRD
         elif self.sim.policy_panel.sequencing_rule == "Customized":
-            Seq_Priority = order.PRD
+            Seq_Priority = self.sim.customized_settings.pool_seq_rule()
         else:
             raise Exception('No sequencing rule in the pool selected')
 
@@ -37,7 +38,8 @@ class ReleaseControl(object):
                     len(self.sim.model_panel.MANUFACTURING_FLOOR[order.routing_sequence[0]].users) \
                     <= self.sim.policy_panel.continuous_trigger:
                 work_center = order.routing_sequence[0]
-                order.process = self.sim.env.process(self.sim.release_control.continuous_trigger(work_center=work_center))
+                order.process = self.sim.env.process(
+                    self.sim.release_control.continuous_trigger(work_center=work_center))
         elif self.sim.policy_panel.release_control_method == "pure_continuous":
             order.process = self.sim.env.process(self.sim.release_control.continuous_release())
         elif self.sim.policy_panel.release_control_method == "CONWIP":
@@ -97,7 +99,8 @@ class ReleaseControl(object):
                 # If a norm has been violated the job is not released and the contributed load set back
                 if not order.release:
                     for WC in order.routing_sequence:
-                        self.sim.model_panel.RELEASED[WC] -= order.process_time[WC] / (order.routing_sequence.index(WC) + 1)
+                        self.sim.model_panel.RELEASED[WC] -= order.process_time[WC] / (
+                                order.routing_sequence.index(WC) + 1)
 
                 # The released orders are collected into a list for release
                 if order.release:
@@ -185,7 +188,8 @@ class ReleaseControl(object):
                     self.sim.data_run.ContLUMSCORCounter += 1
                     # Contribute the load to the workload measures
                     for WC in order.routing_sequence:
-                        self.sim.model_panel.RELEASED[WC] += order.process_time[WC] / (order.routing_sequence.index(WC) + 1)
+                        self.sim.model_panel.RELEASED[WC] += order.process_time[WC] / (
+                                order.routing_sequence.index(WC) + 1)
                         order.release = True
                         # If an order turned out to be released, it is send to be removed from the pool
                     if order.release:
@@ -210,7 +214,8 @@ class ReleaseControl(object):
         :param work_center:
         """
         # control the if the the amount of orders in or before the work centre is equal or less than one
-        if len(order.WorkCenterRQ.queue) + len(order.WorkCenterRQ.users) <= self.sim.policy_panel.continuous_trigger:
+        if len(order.work_center_RQ.queue) + len(
+                order.work_center_RQ.users) <= self.sim.policy_panel.continuous_trigger:
             self.sim.env.process(self.sim.release_control.continuous_trigger(work_center=work_center))
 
     def CONWIP(self):
@@ -239,11 +244,11 @@ class ReleaseControl(object):
                     order.Release = False
 
                 # If a norm has been violated the job is not released and the contributed load set back
-                if order.Release == False:
+                if not order.Release:
                     self.sim.model_panel.RELEASED["WC1"] -= 1
 
                 # The released orders are collected into a list for release
-                elif order.Release == True:
+                elif order.Release:
                     # Orders for released are collected into a list
                     release_now.append(order)
 
@@ -284,11 +289,11 @@ class ReleaseControl(object):
                     order.Release = False
 
                 # If a norm has been violated the job is not released and the contributed load set back
-                if order.Release == False:
+                if not order.Release:
                     GVar.RELEASED["WC1"] -= order.process_time_cumulative
 
                 # The released orders are collected into a list for release
-                elif order.Release == True:
+                elif order.Release:
                     # Orders for released are collected into a list
                     release_now.append(order)
 
@@ -300,3 +305,23 @@ class ReleaseControl(object):
                 self.sim.env.process(self.sim.release_control.remove_from_pool(release_now))
             return
             yield
+
+    def finished_load(self, order, work_center):
+        """
+        add the processed load and trigger continuous release if required.
+        :param order:
+        :param work_center:
+        :return:
+        """
+        # remove load
+        if self.sim.policy_panel.release_control_method == "CONWIP" and len(order.routing_sequence == 0):
+            self.sim.model_panel.PROCESSED["WC1"] += 1
+        elif self.sim.policy_panel.release_control_method == "CONLOAD" and len(order.routing_sequence == 0):
+            self.sim.model_panel.PROCESSED["WC1"] += order.process_time_cumulative
+        else:
+            self.sim.model_panel.PROCESSED[work_center] += order.process_time[work_center] / (
+                    order.routing_sequence_data.index(work_center) + 1)
+        # continuous trigger LUMS COR
+        if self.sim.policy_panel.release_control_method == "LUMS_COR":
+            self.sim.release_control.continuous_trigger_activation(order=order, work_center=work_center)
+        return

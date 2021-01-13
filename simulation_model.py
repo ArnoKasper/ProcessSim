@@ -6,15 +6,14 @@ Version: 1.0.0
 # set code and import libraries ----------------------------------------------------------------------------------------
 import simpy
 import random
-import numpy as np
 
 # Import files for simulation experiments ------------------------------------------------------------------------------
-import control_panel
-import data_collection_and_storage as data_methods
-import general_functions
+from control_panel import ModelPanel, PolicyPanel
+from data_collection_and_storage import DataCollection, DataStorageRun, DataStorageExp
+from general_functions import General_Functions
 from sim_source import Source
 from process import Process
-
+from customized_settings import CustomizedSettings
 
 class Simulation_Model(object):
     """
@@ -38,20 +37,23 @@ class Simulation_Model(object):
         # import the Simpy environment
         self.env = simpy.Environment()
 
+        # add the customized settings
+        self.customized_settings = CustomizedSettings(simulation=self)
+
         # add general functionality to the model
-        self.general_functions = general_functions.General_Functions()
+        self.general_functions = General_Functions(simulation=self)
 
         # get the model and policy control panel
-        self.model_panel = control_panel.ModelPanel(experiment_number=self.exp_number)
-        self.policy_panel = control_panel.PolicyPanel(experiment_number=self.exp_number)
+        self.model_panel = ModelPanel(experiment_number=self.exp_number, simulation=self)
+        self.policy_panel = PolicyPanel(experiment_number=self.exp_number)
         self.print_info = self.model_panel.print_info
 
         # get the data storage variables
-        self.data_run = data_methods.Data_Storage_Run(sim=self)
-        self.data_exp = data_methods.Data_Storage_Exp(sim=self)
+        self.data_run = DataStorageRun(sim=self)
+        self.data_exp = DataStorageExp(sim=self)
 
         # add data clearing methods
-        self.data_collection = data_methods.Data_Collection(simulation=self)
+        self.data_collection = DataCollection(simulation=self)
 
         # import source
         self.source = Source(simulation=self)
@@ -92,7 +94,6 @@ class Simulation_Model(object):
         if self.model_panel.CollectBasicData or \
                 self.model_panel.CollectPeriodicData or \
                 self.model_panel.CollectOrderData or \
-                self.model_panel.AGENT_CONTROL or \
                 self.model_panel.CollectDiscreteData:
             self.run_manager = self.env.process(Simulation_Model.run_manager(self))
 
@@ -125,7 +126,7 @@ class Simulation_Model(object):
                 self.update_run_data()
 
             if self.model_panel.CollectOrderData:
-                self.data_exp = data_methods.Data_Storage_Exp(sim=self)
+                self.data_exp = DataStorageExp(sim=self)
 
             yield self.env.timeout(self.model_panel.RUN_TIME)
             # chance the warm_up status
@@ -149,7 +150,7 @@ class Simulation_Model(object):
                 self.print_run_info()
 
     def update_run_data(self):
-        self.data_run = data_methods.Data_Storage_Run(self)
+        self.data_run = DataStorageRun(self)
         return
 
     # function that print information to the console

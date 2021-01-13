@@ -44,7 +44,7 @@ class Source(object):
             if self.sim.policy_panel.release_control:
                 order.process = self.sim.env.process(self.sim.release_control.order_pool(order=order))
             else:
-                order.process = self.sim.process.put_in_queue(order=order)
+                order.process = self.sim.env.process(self.sim.process.put_in_queue(order=order))
 
             # next inter arrival time
             if not self.stationary:
@@ -172,7 +172,7 @@ class NonStationaryControl(object):
             if self.current_utilization != utilization_list[index]:
                 self.current_utilization = utilization_list[index]
                 self.current_mean_between_arrival = \
-                    self.sim.general_functions.arrival_time_caluclation(
+                    self.sim.general_functions.arrival_time_calculator(
                         wc_and_flow_config=self.sim.model_panel.WC_AND_FLOW_CONFIGURATION,
                         manufacturing_floor_layout=self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT,
                         aimed_utilization=self.current_utilization,
@@ -541,7 +541,7 @@ class NonStationaryControl(object):
                     current_utilization = utilization_list[index]
 
                 current_mean_between_arrival = \
-                    self.sim.general_functions.arrival_time_caluclation(
+                    self.sim.general_functions.arrival_time_calculator(
                         wc_and_flow_config=self.sim.model_panel.WC_AND_FLOW_CONFIGURATION,
                         manufacturing_floor_layout=self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT,
                         aimed_utilization=current_utilization,

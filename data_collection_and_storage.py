@@ -7,7 +7,7 @@ import statistics
 import numpy as np
 import pandas as pd
 
-class Data_Storage_Run(object):
+class DataStorageRun(object):
     def __init__(self, sim):
         self.sim = sim
 
@@ -47,7 +47,7 @@ class Data_Storage_Run(object):
 
 
 #### Collection variables of each experiment ---------------------------------------------------------------------------
-class Data_Storage_Exp(object):
+class DataStorageExp(object):
     def __init__(self, sim):
         self.sim = sim
 
@@ -116,27 +116,8 @@ class Data_Storage_Exp(object):
             self.variable_2 = list()
             self.variable_3 = list()
 
-class Data_Storage_and_collection_Agent(object):
-    def __init__(self, sim):
-        self = self
-        self.sim = sim
 
-        self.state_array_agent = np.array([], dtype='uint16')
-
-    def agent_data_colletion(self, state_array):
-        try:
-            self.state_array_agent = np.vstack([self.state_array_agent, state_array])
-        except ValueError:
-            self.state_array_agent = state_array
-        return
-
-#### Results collection-------------------------------------------------------------------------------------------------
-class Data_Collection(object):
-
-    def __init__(self, simulation):
-        self = self
-        self.sim = simulation
-
+class DataCollection(object):
     """
     This class contains all the methods associated with data collection.
     Depending on the settings the method will be used for data collection.
@@ -149,6 +130,8 @@ class Data_Collection(object):
         - Machine data
     3. Method to empty the sim.model_pannel
     """
+    def __init__(self, simulation):
+        self.sim = simulation
 
     def basic_data_storage(self):
         # declare params
@@ -284,11 +267,11 @@ class Data_Collection(object):
 
             # Add machine flow information
             if order.machine_route[string_WC] == 0:
-                Data_Storage_Exp.list_tracking[index] += order.WCNumber
+                DataStorageExp.list_tracking[index] += order.WCNumber
 
             elif order.machine_route[string_WC] == 1:
                 # Data_Storage_Exp.list_tracking[index + 1] += self.WCNumber
-                Data_Storage_Exp.list_tracking[index] += order.WCNumber
+                DataStorageExp.list_tracking[index] += order.WCNumber
         return
 
     def station_data_collection(self, order):

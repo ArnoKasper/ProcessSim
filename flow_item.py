@@ -61,9 +61,9 @@ class Order(object):
         for WC in self.routing_sequence:
             # Type of process time distribution
             if self.sim.model_panel.PROCESS_TIME_DISTRIBUTION == "2_erlang":
-                self.process_time[WC] = self.sim.general_functions.two_erlang_truncated(self.sim)
+                self.process_time[WC] = self.sim.general_functions.two_erlang_truncated()
             elif self.sim.model_panel.PROCESS_TIME_DISTRIBUTION == "lognormal":
-                self.process_time[WC] = self.sim.general_functions.log_normal_truncated(self.sim)
+                self.process_time[WC] = self.sim.general_functions.log_normal_truncated()
             elif self.sim.model_panel.PROCESS_TIME_DISTRIBUTION == "constant":
                 self.process_time[WC] = self.sim.model_panel.MEAN_PROCESS_TIME
             else:
@@ -71,10 +71,6 @@ class Order(object):
 
             # calculate cum
             self.process_time_cumulative += self.process_time[WC]
-
-            # single machine with equal capacity
-            if self.sim.model_panel.queue_configuration == "SM":
-                self.process_time[WC] = self.process_time[WC] / self.sim.model_panel.NUMBER_OF_MACHINES
 
             # data collection variables
             self.queue_entry_time[WC] = 0
@@ -85,13 +81,13 @@ class Order(object):
 
         # Due Date -----------------------------------------------------------------------------------------------------
         if self.sim.policy_panel.due_date_method == "random":
-            self.due_date = self.sim.general_functions.random_value_DD(self.sim)
+            self.due_date = self.sim.general_functions.random_value_DD()
         elif self.sim.policy_panel.due_date_method == "factor_k":
-            self.due_date = self.sim.general_functions.factor_K_DD(self, self.sim)
+            self.due_date = self.sim.general_functions.factor_K_DD(order=self)
         elif self.sim.policy_panel.due_date_method == "constant":
-            self.due_date = self.sim.general_functions.add_contant_DD(self, self.sim)
+            self.due_date = self.sim.general_functions.add_contant_DD(order=self)
         elif self.sim.policy_panel.due_date_method == "total_work_content":
-            self.due_date = self.sim.general_functions.total_work_content(self, self.sim)
+            self.due_date = self.sim.general_functions.total_work_content(order=self)
         else:
             raise Exception("Please indicate a allowed due date procedure")
 

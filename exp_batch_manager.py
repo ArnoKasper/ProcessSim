@@ -7,14 +7,14 @@ Version: 1.0.0
 import exp_manager
 import time
 
-# Track run time
+# track run time
 start_time = time.time()
 
-# Set the range of the experiments that needs to be run
+# set the range of the experiments that needs to be run
 lower_limit = 0
 upper_limit = 0
 
-# Activate the simulation (Automatic model)
+# activate the simulation (automatic model)
 exp_manager.Experiment_Manager(lower_limit, upper_limit)
 
 # provide essential experimental information

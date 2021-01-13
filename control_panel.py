@@ -7,13 +7,14 @@ import general_functions
 import exp_paramaters as paramaters
 
 class ModelPanel(object):
-    def __init__(self, experiment_number):
+    def __init__(self, experiment_number, simulation):
         self.experiment_number = experiment_number
+        self.sim = simulation
         self.print_info = True
         self.params_list = paramaters.experimental_params_list
         self.project_name = "XXXX"
         self.experiment_name = "XXXX"
-        self.general_functions = general_functions.General_Functions()
+        self.general_functions = general_functions.General_Functions(simulation=self.sim)
 
         # general variables and experimental factors
         # simulation parameters-----------------------------------------------------------------------------------------
@@ -40,15 +41,7 @@ class ModelPanel(object):
             3. PFS: pure flow shop
             4. PJS: pure job shop 
         """
-        self.WC_AND_FLOW_CONFIGURATION = "RJS"  # 'GFS'
-
-        # Queueing configuration
-        """
-        - SQ: single queue 
-        - MQ: multi queue
-        - SM: single machine, special case of the single queue 
-        """
-        self.queue_configuration = "SQ"
+        self.WC_AND_FLOW_CONFIGURATION = 'GFS'  # 'RJS'
 
         # process and arrival times
         """
@@ -68,7 +61,7 @@ class ModelPanel(object):
         # (mean amount of machines/amount of machines/utilization * 1 / amount of machines)
 
         self.MEAN_TIME_BETWEEN_ARRIVAL = \
-            self.general_functions.arrival_time_caluclation(
+            self.general_functions.arrival_time_calculator(
                       wc_and_flow_config=self.WC_AND_FLOW_CONFIGURATION,
                       manufacturing_floor_layout=self.MANUFACTURING_FLOOR_LAYOUT,
                       aimed_utilization=self.AIMED_UTILIZATION,
@@ -146,7 +139,7 @@ class PolicyPanel(object):
         self.RVminmax = [28, 36]  # Due Dates intervals
         self.FactorKValue = 12  # Due Date factor K
         self.AddContantDDValue = 20  # Due Date adding constant
-        self.total_work_content_value = 5#self.params_list[self.experiment_number][2]
+        self.total_work_content_value = 10 #self.params_list[self.experiment_number][2]
 
         # Release control ----------------------------------------------------------------------------------------------
         """
@@ -176,15 +169,15 @@ class PolicyPanel(object):
                 - FCFS
                 - PRD
                 - SPT
-                - Custom: --> define
+                - Custom --> define
             """
         # Sequencing rules
         self.sequencing_rule = "PRD"
         self.PRD_k = 6  # Factor K for PRD calculations
 
         # release control method
-        self.release_control = True  # self.params_list[self.experiment_number][0]
-        self.release_norm = 10
+        self.release_control = False  # self.params_list[self.experiment_number][0]
+        self.release_norm = 5
         self.release_control_method = "LUMS_COR"  # "control-novel-beta" #self.params_list[self.experiment_number][3]
 
         # LUMS COR
@@ -197,7 +190,7 @@ class PolicyPanel(object):
             - FCFS
             - SPT
             - ODD, following Land et al. (2014)
-            - Custom: --> define
+            - Custom --> define
         """
         # Dispatching rules
         self.dispatching_rule = "FCFS"  # "SPT"

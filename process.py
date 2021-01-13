@@ -9,10 +9,12 @@ from operator import itemgetter
 class Process(object):
     def __init__(self, simulation):
         """
-        params
+        the process with discrete capacity sources
+        :param simulation:
         """
         self.sim = simulation
-        self.Dispatching_Rule = 'FCFS'
+        self.dispatching_rule = self.sim.policy_panel.dispatching_rule
+        self.dispatching_mode = "automatic"  # customized
 
     def put_in_queue(self, order):
         if order.first_entry:
@@ -49,14 +51,14 @@ class Process(object):
 
     def queue_list(self, order):
         # select dispatching rule
-        if self.Dispatching_Rule == "FCFS":
+        if self.dispatching_rule == "FCFS":
             order.dispatching_priority = order.identifier
-        elif self.Dispatching_Rule == "SPT":
+        elif self.dispatching_rule == "SPT":
             order.dispatching_priority = order.process_time[order.routing_sequence[0]]
-        elif self.Dispatching_Rule == "ODD":
+        elif self.dispatching_rule == "ODD":
             order.dispatching_priority = order.ODDs[order.routing_sequence[0]]
-        elif self.Dispatching_Rule == "Custom":
-            order.dispatching_priority = "spam"
+        elif self.dispatching_rule == "Custom":
+            order.dispatching_priority = self.sim.customized_settings.queue_priority(order=order)
         else:
             raise Exception("no valid dispatching rule defined")
 
@@ -84,31 +86,37 @@ class Process(object):
 
     def get_most_urgent_order(self, work_center):
         # setup params
-        urgency_list_1 = list()
+        priority_list = list()
 
         # if there are no items in the queue, return
         if len(self.sim.model_panel.ORDER_QUEUES[work_center].items) == 0:
             return None, True, False
 
-        # I.) find most urgent order in the queue-----------------------------------------------------------------------
-        for i, order in enumerate(self.sim.model_panel.ORDER_QUEUES[work_center].items):
-            order_list = order
+        # update priorities if required
+        if self.dispatching_mode == "customized":
+            queue_list = self.sim.model_panel.ORDER_QUEUES[work_center].items
+            self.sim.customized_settings.dispatching_mode(queue_list=queue_list)
+
+        # find most urgent order in the queue
+        for i, order_list in enumerate(self.sim.model_panel.ORDER_QUEUES[work_center].items):
+            # update routing step
             if len(order_list[0].routing_sequence) <= 1:
                 order_list[2] = "NA"
             else:
                 order_list[2] = order_list[0].routing_sequence[1]
-            urgency_list_1.append(order_list)
+            priority_list.append(order_list)
 
-        urgency_list_2 = sorted(urgency_list_1, key=itemgetter(1))  # sort according to priority
-        order = urgency_list_1[0]
+        # select order with highest priority
+        order = sorted(priority_list, key=itemgetter(1))[0]  # sort and pick with highest priority
+
         # set to zero to pull out of pull
         order[3] = 0
         return order, False, True
 
     def manufacturing_process(self, order, work_center):
         # set params
-        order.workcenterRQ = self.sim.model_panel.MANUFACTURING_FLOOR[work_center]
-        req = order.workcenterRQ.request(priority=order.dispatching_priority)
+        order.work_center_RQ = self.sim.model_panel.MANUFACTURING_FLOOR[work_center]
+        req = order.work_center_RQ.request(priority=order.dispatching_priority)
         req.self = order
 
         # Yield a request
@@ -121,6 +129,10 @@ class Process(object):
         # update the routing list to avoid re-entrance
         order.machine_route[work_center] = "PASSED"
         order.routing_sequence.remove(work_center)
+
+        # release control
+        if self.sim.policy_panel.release_control:
+            self.sim.release_control.finished_load(order=order, work_center=work_center)
 
         # collect data
         self.data_collection_intermediate(order=order, work_center=work_center)
@@ -173,14 +185,14 @@ class Process(object):
 
         # Collect flow data
         if self.sim.model_panel.CollectFlowData:
-            self.sim.data_collection.Data_Collection.flow_data_collection(sim=self.sim)
+            self.sim.data_collection.DataCollection.flow_data_collection(sim=self.sim)
 
         # collect tracking data
         if self.sim.model_panel.CollectMachineData:
             self.sim.data_collection.machine_data_collection(sim=self.sim)
 
         # collect discrete data
-        if self.sim.model_panel.CollectDiscreteData and self.sim.warm_up == False:
+        if self.sim.model_panel.CollectDiscreteData and not self.sim.warm_up:
             value = order.finishing_time - order.due_date
             self.sim.data_collection.discrete_data_collection(sim=self.sim, value=value)
 
