@@ -27,12 +27,8 @@ class Simulation_Model(object):
         self.warm_up = True
 
         # Set seed for specifically process times and other random generators
-        self.random_generator_1 = random.Random()  # For processing times
-        self.random_generator_2 = random.Random()  # For other random processes
-        self.random_generator_3 = random.Random()  # For inter arrival times
-        self.random_generator_1.seed(999999)
-        self.random_generator_2.seed(999999)
-        self.random_generator_3.seed(999999)
+        self.random_generator = random.Random()
+        self.random_generator.seed(999999)
 
         # import the Simpy environment
         self.env = simpy.Environment()
@@ -104,6 +100,7 @@ class Simulation_Model(object):
         # start simulation
         sim_time = (self.model_panel.WARM_UP_PERIOD + self.model_panel.RUN_TIME) * \
                    self.model_panel.NUMBER_OF_RUNS + 0.001
+
         self.env.run(until=sim_time)
 
         # simulation finished, print final info

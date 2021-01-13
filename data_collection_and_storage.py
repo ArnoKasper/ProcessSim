@@ -3,7 +3,6 @@ Project: ProcessSim
 Made By: Arno Kasper
 Version: 1.0.0
 """
-import statistics
 import numpy as np
 import pandas as pd
 
@@ -152,13 +151,13 @@ class DataCollection(object):
 
         # Throughput Time measures (GENERAL)
         # Means
-        Run_GrossThroughputTime_mean = statistics.mean(self.sim.data_run.GrossThroughputTime)
-        Run_pooltime_mean = statistics.mean(self.sim.data_run.pooltime)
-        Run_ThroughputTime_mean = statistics.mean(self.sim.data_run.ThroughputTime)
+        Run_GrossThroughputTime_mean = np.mean(self.sim.data_run.GrossThroughputTime)
+        Run_pooltime_mean = np.mean(self.sim.data_run.pooltime)
+        Run_ThroughputTime_mean = np.mean(self.sim.data_run.ThroughputTime)
         # Variance
-        Run_GrossThroughputTime_var = statistics.variance(self.sim.data_run.GrossThroughputTime)
-        Run_pooltime_var = statistics.variance(self.sim.data_run.pooltime)
-        Run_ThroughputTime_var = statistics.variance(self.sim.data_run.ThroughputTime)
+        Run_GrossThroughputTime_var = np.var(self.sim.data_run.GrossThroughputTime)
+        Run_pooltime_var = np.var(self.sim.data_run.pooltime)
+        Run_ThroughputTime_var = np.var(self.sim.data_run.ThroughputTime)
 
         # Throughput Time measures (STATION)
         if self.sim.model_panel.CollectStationData:
@@ -170,22 +169,22 @@ class DataCollection(object):
                 Run_Stationpooltime_var[WC] = list()
                 Run_StationThroughputTime_var[WC] = list()
                 # Means
-                Run_StationGrossThroughputTime_mean[WC] = statistics.mean(self.sim.data_run.StationGrossThroughputTime[WC])
-                Run_Stationpooltime_mean[WC] = statistics.mean(self.sim.data_run.Stationpooltime[WC])
-                Run_StationThroughputTime_mean[WC] = statistics.mean(self.sim.data_run.StationThroughputTime[WC])
+                Run_StationGrossThroughputTime_mean[WC] = np.mean(self.sim.data_run.StationGrossThroughputTime[WC])
+                Run_Stationpooltime_mean[WC] = np.mean(self.sim.data_run.Stationpooltime[WC])
+                Run_StationThroughputTime_mean[WC] = np.mean(self.sim.data_run.StationThroughputTime[WC])
                 # Variance
-                Run_StationGrossThroughputTime_var[WC] = statistics.variance(self.sim.data_run.StationGrossThroughputTime[WC])
-                Run_Stationpooltime_var[WC] = statistics.variance(self.sim.data_run.Stationpooltime[WC])
-                Run_StationThroughputTime_var[WC] = statistics.variance(self.sim.data_run.StationThroughputTime[WC])
+                Run_StationGrossThroughputTime_var[WC] = np.var(self.sim.data_run.StationGrossThroughputTime[WC])
+                Run_Stationpooltime_var[WC] = np.var(self.sim.data_run.Stationpooltime[WC])
+                Run_StationThroughputTime_var[WC] = np.var(self.sim.data_run.StationThroughputTime[WC])
 
         # Tardiness measures
         Run_percentageTardy = self.sim.data_run.NumberTardy / self.sim.data_run.Number
         # Mean
-        Run_Tardiness_mean = statistics.mean(self.sim.data_run.Tardiness)
-        Run_Lateness_mean = statistics.mean(self.sim.data_run.Lateness)
+        Run_Tardiness_mean = np.mean(self.sim.data_run.Tardiness)
+        Run_Lateness_mean = np.mean(self.sim.data_run.Lateness)
         # Variance
-        Run_Tardiness_var = statistics.variance(self.sim.data_run.Tardiness)
-        Run_Lateness_var = statistics.variance(self.sim.data_run.Lateness)
+        Run_Tardiness_var = np.var(self.sim.data_run.Tardiness)
+        Run_Lateness_var = np.var(self.sim.data_run.Lateness)
 
         # Safe experimental data in database------------------------------------------------------------------------
         self.sim.data_exp.Dat_exp_run.append(Run_experiment_run)

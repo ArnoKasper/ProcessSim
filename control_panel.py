@@ -3,7 +3,7 @@ Project: ProcessSim
 Made By: Arno Kasper
 Version: 1.0.0
 """
-import general_functions
+from general_functions import General_Functions
 import exp_paramaters as paramaters
 
 class ModelPanel(object):
@@ -14,7 +14,7 @@ class ModelPanel(object):
         self.params_list = paramaters.experimental_params_list
         self.project_name = "XXXX"
         self.experiment_name = "XXXX"
-        self.general_functions = general_functions.General_Functions(simulation=self.sim)
+        self.general_functions = General_Functions(simulation=self.sim)
 
         # general variables and experimental factors
         # simulation parameters-----------------------------------------------------------------------------------------

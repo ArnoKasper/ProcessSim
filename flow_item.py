@@ -27,9 +27,9 @@ class Order(object):
         # Routing sequence
         if self.sim.model_panel.WC_AND_FLOW_CONFIGURATION == "GFS" or \
                 self.sim.model_panel.WC_AND_FLOW_CONFIGURATION == "RJS":
-            self.routing_sequence = self.sim.random_generator_2.sample(
+            self.routing_sequence = self.sim.random_generator.sample(
                 self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT,
-                self.sim.random_generator_2.randint(1, len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)))
+                self.sim.random_generator.randint(1, len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)))
             # Sort the routing if necessary
             if self.sim.model_panel.WC_AND_FLOW_CONFIGURATION == "GFS":
                 self.routing_sequence.sort()  # GFS or PFS require sorted list of stations
@@ -39,7 +39,7 @@ class Order(object):
 
         elif self.sim.model_panel.WC_AND_FLOW_CONFIGURATION == "PJS":
             self.routing_sequence = \
-                self.sim.random_generator_2.shuffle(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
+                self.sim.random_generator.shuffle(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
         else:
             raise Exception("Please indicate an allowed the work centre and flow configuration")
 
