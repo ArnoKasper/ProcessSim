@@ -17,19 +17,19 @@ class ReleaseControl(object):
         """
         # Set the priority for each job
         if self.sim.policy_panel.sequencing_rule == "FCFS":
-            Seq_Priority = order.id
+            seq_priority = order.id
         elif self.sim.policy_panel.sequencing_rule == "SPT":
-            Seq_Priority = list(order.process_time.values())[0]
+            seq_priority = list(order.process_time.values())[0]
         elif self.sim.policy_panel.sequencing_rule == "PRD":
-            Seq_Priority = order.PRD
+            seq_priority = order.PRD
         elif self.sim.policy_panel.sequencing_rule == "Customized":
-            Seq_Priority = self.sim.customized_settings.pool_seq_rule()
+            seq_priority = self.sim.customized_settings.pool_seq_rule()
         else:
             raise Exception('No sequencing rule in the pool selected')
 
         # Put each job in the pool
-        job = [order, Seq_Priority]
-        yield self.pool.put(job)
+        job = [order, seq_priority, 1]
+        self.pool.put(job)
 
         # release mechanisms
         if self.sim.policy_panel.release_control_method == "LUMS_COR":
@@ -62,11 +62,11 @@ class ReleaseControl(object):
         :param release_now: list with parameters of the flow item
         """
         # create a variable that is equal to a item that is removed from the pool
-        identifier = release_now[0].identifier
-        release_now.pop(0)
-
-        # Remove the orders from the pool by filtering the item that needs to go out the pool
-        released_used = yield self.pool.get(lambda released_used: released_used[0].identifier == identifier)
+        release_now[2] = 0
+        # sort the queue
+        self.pool.items.sort(key=itemgetter(2))
+        # remove flow item from pool
+        self.pool.get()
 
     def periodic_release(self):
         """
@@ -74,11 +74,7 @@ class ReleaseControl(object):
         """
         periodic_interval = self.sim.policy_panel.check_period
         while True:
-            if self.sim.env.now >= self.sim.model_panel.WARM_UP_PERIOD:
-                break
-            else:
-                # yield a timeout when there is a new periodic release period
-                yield self.sim.env.timeout(periodic_interval)
+            yield self.sim.env.timeout(periodic_interval)
             # Reset the list of released orders
             release_now = []
 
@@ -87,8 +83,8 @@ class ReleaseControl(object):
                 self.pool.items.sort(key=itemgetter(1))
 
             # Contribute the load from each item in the pool
-            for job in range(0, len(self.pool.items)):
-                order = self.pool.items[job][0]
+            for i, order_list in enumerate(self.pool.items):
+                order = order_list[0]
 
                 # release workload element --------------------------------------------------------------------------
                 # Contribute the load from for each workstation
@@ -112,18 +108,15 @@ class ReleaseControl(object):
                 # The released orders are collected into a list for release
                 if order.release:
                     # Orders for released are collected into a list
-                    release_now.append(order)
+                    release_now.append(order_list)
 
-                    # The orders are send to the manufacturing process
-                    order.process = self.sim.env.process(
-                        self.sim.process.put_in_queue(order=order)
-                    )
+                    # The orders are send to the process
+                    self.sim.process.put_in_queue(order=order)
 
             # The released orders are removed from the pool using the remove from pool method
-            for jobs in range(0, len(release_now)):
-                self.sim.env.process(self.sim.release_control.remove_from_pool(release_now))
+            for _, jobs in enumerate(release_now):
+                self.sim.release_control.remove_from_pool(release_now=jobs)
 
-    # WLC: continuous release  -----------------------------------------------------------------------------------------
     def continuous_release(self):
         """
         Workload Control: continuous release using aggregate load. See workings in Thürer et al, 2012
@@ -136,8 +129,8 @@ class ReleaseControl(object):
             self.pool.items.sort(key=itemgetter(1))
 
         # Contribute the load from each item in the pool
-        for job in range(0, len(self.pool.items)):
-            order = self.pool.items[job][0]
+        for i, order_list in enumerate(self.pool.items):
+            order = order_list[0]
 
             # release workload element
             # Contribute the load from for each workstation
@@ -160,18 +153,15 @@ class ReleaseControl(object):
             # The released orders are collected into a list for release
             if order.release:
                 # Orders for released are collected into a list
-                release_now.append(order)
+                release_now.append(order_list)
 
-                # The orders are send to the manufacturing process
-                order.process = self.sim.env.process(
-                    self.sim.process.put_in_queue(order=order)
-                )
+                # The orders are send to the process
+                self.sim.process.put_in_queue(order=order)
 
         # The released orders are removed from the pool using the remove from pool method
-        for jobs in range(0, len(release_now)):
-            self.sim.env.process(self.sim.release_control.remove_from_pool(release_now))
+        for _, jobs in enumerate(release_now):
+            self.sim.release_control.remove_from_pool(release_now=jobs)
 
-    # continuous_trigger (part of LUMS COR) ----------------------------------------------------------------------------
     def continuous_trigger(self, work_center):
         """
         Workload Control: continuous release using aggregate load. See workings in Thürer et al, 2014.
@@ -179,15 +169,14 @@ class ReleaseControl(object):
         """
         while True:
             # empty the release list
-            release_now = []
             trigger = 1
             # sort orders in the pool
             if not self.sim.policy_panel.sequencing_rule == "FCFS":
                 self.pool.items.sort(key=itemgetter(1))
 
             # control if there is any order available for the starving work centre from all items in the pool
-            for job in range(0, len(self.pool.items)):
-                order = self.pool.items[job][0]
+            for i, order_list in enumerate(self.pool.items):
+                order = order_list[0]
 
                 # if there is an order available, than it can be released
                 if order.routing_sequence[0] == work_center and trigger == 1:
@@ -201,17 +190,10 @@ class ReleaseControl(object):
                         # if an order turned out to be released, it is send to be removed from the pool
                     if order.release:
                         order.continuous_trigger = True
-
-                        # Add the order to the released list
-                        release_now.append(order)
-
-                        # Remove the order from the pool
-                        self.sim.env.process(self.sim.release_control.remove_from_pool(release_now))
-
                         # Send the order to the starting work centre
-                        order.process = self.sim.env.process(
-                            self.sim.process.put_in_queue(order=order)
-                        )
+                        self.sim.process.put_in_queue(order=order)
+                        # release order from the pool
+                        self.sim.release_control.remove_from_pool(release_now=order_list)
             return
             yield
 
@@ -237,8 +219,8 @@ class ReleaseControl(object):
                 self.pool.items.sort(key=itemgetter(1))
 
             # Contribute the load from each item in the pool
-            for job in range(0, len(self.pool.items)):
-                order = self.pool.items[job][0]
+            for i, order_list in enumerate(self.pool.items):
+                order = order_list[0]
 
                 # Contribute the load from for each workstation
                 self.sim.model_panel.RELEASED["WC1"] += 1
@@ -256,16 +238,14 @@ class ReleaseControl(object):
                 # The released orders are collected into a list for release
                 elif order.Release:
                     # Orders for released are collected into a list
-                    release_now.append(order)
+                    release_now.append(order_list)
 
-                    # The orders are send to the manufacturing process
-                    self.sim.env.process(
-                        self.sim.process.put_in_queue(order=order)
-                    )
+                    # The orders are send to the manufacturing
+                    self.sim.process.put_in_queue(order=order)
 
             # The released orders are removed from the pool using the remove from pool method
-            for jobs in range(0, len(release_now)):
-                self.sim.env.process(self.sim.release_control.remove_from_pool(release_now))
+            for _, jobs in enumerate(release_now):
+                self.sim.release_control.remove_from_pool(release_now=jobs)
             return
             yield
 
@@ -282,8 +262,8 @@ class ReleaseControl(object):
                 self.pool.items.sort(key=itemgetter(1))
 
             # Contribute the load from each item in the pool
-            for job in range(0, len(self.pool.items)):
-                order = self.pool.items[job][0]
+            for i, order_list in enumerate(self.pool.items):
+                order = order_list[0]
 
                 # Contribute the load from for each workstation ["WC1"] --> only use the first value of the library
                 self.sim.model_panel.RELEASED["WC1"] += order.process_time_cumulative
@@ -301,14 +281,14 @@ class ReleaseControl(object):
                 # The released orders are collected into a list for release
                 elif order.Release:
                     # Orders for released are collected into a list
-                    release_now.append(order)
+                    release_now.append(order_list)
 
-                    # The orders are send to the manufacturing process
-                    self.sim.env.process(self.sim.process.put_in_queue(order=order))
+                    # The orders are send to the process
+                    self.sim.process.put_in_queue(order=order)
 
             # The released orders are removed from the pool using the remove from pool method
-            for jobs in range(0, len(release_now)):
-                self.sim.env.process(self.sim.release_control.remove_from_pool(release_now))
+            for _, jobs in enumerate(release_now):
+                self.sim.release_control.remove_from_pool(release_now=jobs)
             return
             yield
 

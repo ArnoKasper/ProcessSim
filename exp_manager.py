@@ -35,6 +35,7 @@ class Experiment_Manager(object):
         for i in range(self.lower, (self.upper + 1)):
             # activate Simulation experiment method
             self.sim = sim.Simulation_Model(i)
+            self.sim.sim_function()
 
             # finish the experiment by saving the data and move on to the saving function
             exp_variable_list = self.sim.model_panel.project_name

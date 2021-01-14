@@ -10,7 +10,7 @@ class Process(object):
     def __init__(self, simulation):
         """
         the process with discrete capacity sources
-        :param simulation:
+        :param simulation: simulation object
         """
         self.sim = simulation
         self.dispatching_rule = self.sim.policy_panel.dispatching_rule
@@ -19,7 +19,7 @@ class Process(object):
     def put_in_queue(self, order):
         """
         controls if an order can immediately be send to a capacity source or needs to be put in the queue.
-        :param order:
+        :param order: order object
         :return:
         """
         if order.first_entry:
@@ -45,14 +45,14 @@ class Process(object):
         else:
             # put back into the queue
             queue_item = self.queue_item(order=order)
-            yield self.sim.model_panel.ORDER_QUEUES[work_center].put(queue_item)
+            self.sim.model_panel.ORDER_QUEUES[work_center].put(queue_item)
             return
 
     def release_from_queue(self, work_center):
         """
         removes an order from the queue
-        :param work_center:
-        :return:
+        :param work_center: work_center number indicating the number of the capacity source
+        :return: void
         """
         # sort the queue
         self.sim.model_panel.ORDER_QUEUES[work_center].items.sort(key=itemgetter(3))
@@ -62,10 +62,10 @@ class Process(object):
     def queue_item(self, order):
         """
         make a list of attributes that needs ot be put into the queue
-        :param order: queue_item
-        :return:
+        :param order: order object
+        :return:queue_item
 
-        Key for the order list
+        Key for the queue_item list
         0: order object
         1: dispatching priority
         2: next step
@@ -94,7 +94,7 @@ class Process(object):
     def dispatch_order(self, work_center):
         """
         Dispatch the order with the highest priority to the capacity source
-        :param work_center:
+        :param work_center: work_center number indicating the number of the capacity source
         :return:
         """
         # get new order for release
@@ -114,8 +114,8 @@ class Process(object):
 
     def get_most_urgent_order(self, work_center):
         """
-        update all priorities and routing steps in the queue
-        :param work_center:
+        Update all priorities and routing steps in the queue
+        :param work_center: work_center number indicating the number of the capacity source
         :return: order, boolean: break_loop, boolean: free_load
         """
         # setup params
@@ -148,9 +148,9 @@ class Process(object):
 
     def capacity_process(self, order, work_center):
         """
-        the process with capacity sources
-        :param order:
-        :param work_center:
+        The process with capacity sources
+        :param order: order object
+        :param work_center: work_center number indicating the number of the capacity source
         :return: void
         """
         # set params
@@ -181,7 +181,8 @@ class Process(object):
             self.data_collection_final(order=order)
         else:
             # activate new release
-            order.process = self.sim.env.process(self.put_in_queue(order=order))
+            self.put_in_queue(order=order)
+            #order.process = self.sim.env.process(self.put_in_queue(order=order))
 
         # next action for the work centre
         self.dispatch_order(work_center=work_center)
@@ -189,9 +190,9 @@ class Process(object):
 
     def data_collection_intermediate(self, order, work_center):
         """
-        collect data between routing steps
-        :param order:
-        :param work_center:
+        Collect data between routing steps
+        :param order: order object
+        :param work_center: work_center number indicating the number of the capacity source
         :return: void
         """
         order.order_start_time[work_center] = self.sim.env.now - order.process_time[work_center]
@@ -201,9 +202,8 @@ class Process(object):
 
     def data_collection_final(self, order):
         """
-        collect data finished order
-        :param order:
-        :param work_center:
+        Collect data finished order
+        :param order: order object
         :return: void
         """
         # Time collection registration
@@ -220,12 +220,12 @@ class Process(object):
             self.sim.data_run.ThroughputTime.append(order.finishing_time - order.release_time)
             self.sim.data_run.Lateness.append(order.finishing_time - order.due_date)
             if order.finishing_time - order.due_date > 0:
-                MeanTardiness = order.finishing_time - order.due_date
+                mean_tardiness = order.finishing_time - order.due_date
                 self.sim.data_run.NumberTardy += 1
             else:
-                MeanTardiness = 0
-            self.sim.data_run.Tardiness.append(MeanTardiness)
-            self.sim.data_run.CumTardiness += MeanTardiness
+                mean_tardiness = 0
+            self.sim.data_run.Tardiness.append(mean_tardiness)
+            self.sim.data_run.CumTardiness += mean_tardiness
             # Collection station data
             if self.sim.model_panel.CollectStationData:
                 self.sim.data_collection.station_data_collection(order=order)

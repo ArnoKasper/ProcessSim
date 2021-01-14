@@ -20,7 +20,7 @@ class ModelPanel(object):
         # simulation parameters-----------------------------------------------------------------------------------------
         self.WARM_UP_PERIOD = 3000    # warm-up period simulation model
         self.RUN_TIME = 10000         # run time simulation model
-        self.NUMBER_OF_RUNS = 10#00     # number of replications
+        self.NUMBER_OF_RUNS = 10#0     # number of replications
 
         # Manufacturing process and order characteristics---------------------------------------------------------------
         self.NUMBER_OF_WORKCENTRES = 6
@@ -110,7 +110,7 @@ class ModelPanel(object):
 
         # Control how the model is used
         self.EXPERIMENT_MANAGER = True
-        self.AGENT_CONTROL = False
+
         self.NON_STATIONARY_CONTROL = False
 
 

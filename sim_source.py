@@ -41,9 +41,9 @@ class Source(object):
 
             # release control
             if self.sim.policy_panel.release_control:
-                order.process = self.sim.env.process(self.sim.release_control.order_pool(order=order))
+                self.sim.release_control.order_pool(order=order)
             else:
-                order.process = self.sim.env.process(self.sim.process.put_in_queue(order=order))
+                self.sim.process.put_in_queue(order=order)
 
             # next inter arrival time
             if not self.stationary:

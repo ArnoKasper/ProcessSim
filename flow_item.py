@@ -23,8 +23,7 @@ class Order(object):
         self.release_time = 0
         self.pool_time = 0
 
-        # Manufacturing params
-        # Routing sequence
+        # rotting sequence params
         if self.sim.model_panel.WC_AND_FLOW_CONFIGURATION == "GFS" or \
                 self.sim.model_panel.WC_AND_FLOW_CONFIGURATION == "RJS":
             self.routing_sequence = self.sim.random_generator.sample(

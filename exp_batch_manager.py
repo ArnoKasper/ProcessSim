@@ -4,7 +4,7 @@ Made By: Arno Kasper
 Version: 1.0.0
 """
 
-import exp_manager
+from exp_manager import Experiment_Manager
 import time
 
 # track run time
@@ -15,7 +15,7 @@ lower_limit = 0
 upper_limit = 0
 
 # activate the simulation (automatic model)
-exp_manager.Experiment_Manager(lower_limit, upper_limit)
+Experiment_Manager(lower_limit, upper_limit)
 
 # provide essential experimental information
 t_time = (time.time() - start_time)

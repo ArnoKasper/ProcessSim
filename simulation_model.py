@@ -62,10 +62,14 @@ class Simulation_Model(object):
         self.release_periodic = "NA"
         self.source_process = "NA"
         self.run_manager = "NA"
-        self.sim_function()
 
     # the actual simulation function with all required SimPy settings---------------------------------------------------
     def sim_function(self):
+        """
+        The simulation function loading the order pool, the order queue and the process sources.
+        Furthermore, it initializes the first processes and stops at the appropriate time.
+        :return: void
+        """
         # create queues and capacity sources
         for i, WorkCentre in enumerate(self.model_panel.MANUFACTURING_FLOOR_LAYOUT):
             self.model_panel.ORDER_QUEUES[WorkCentre] = simpy.FilterStore(self.env)
@@ -106,8 +110,14 @@ class Simulation_Model(object):
         # simulation finished, print final info
         if self.print_info:
             self.print_end_info()
+        return
 
     def run_manager(self):
+        """
+        The run manager managing processes during the simulation. Can perform the same actions in through cyclic
+        manner. Currently, the run_manager managers printing information and the saving and processing of information.
+        :return: void
+        """
         while self.env.now < (
                 self.model_panel.WARM_UP_PERIOD + self.model_panel.RUN_TIME) * self.model_panel.NUMBER_OF_RUNS:
             yield self.env.timeout(self.model_panel.WARM_UP_PERIOD)
@@ -160,7 +170,7 @@ class Simulation_Model(object):
         return print(f'Warm-up period finished')
 
     def print_run_info(self):
-        # Vital simulation results are given
+        # vital simulation results are given
         run_number = int(self.env.now / (self.model_panel.WARM_UP_PERIOD + self.model_panel.RUN_TIME))
         index = run_number - 1
 
@@ -180,7 +190,6 @@ class Simulation_Model(object):
         # print additional info for LUMS_COR release
         if self.policy_panel.release_control_method == "LUMS_COR" and self.policy_panel.release_control:
             print(f'\tContinuous trigger LUMSCOR number:  {self.data_exp.Dat_exp_ConLUMSCOR[index]} times')
-
         return
 
     def print_end_info(self):
