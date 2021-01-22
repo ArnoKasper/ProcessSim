@@ -15,7 +15,18 @@ class DataStorageRun(object):
         self.Number = 0  # Number of Orders processed
         self.StationNumber = [0] * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
         self.CalculateUtiliz = 0  # Utilization machine
+        self.ContLUMSCORCounter = 0
+        self.QSCounter = 0
+        self.order_input_counter = 0
+        self.order_output_counter = 0
 
+        # order data
+        self.order_list = list()
+
+
+        """
+        old method, remove when finished
+        """
         # Throughput Time measures
         self.GrossThroughputTime = list()  # Record Throughput from entry to finish
         self.pooltime = list()  # Record Throughput from entry to release
@@ -36,14 +47,8 @@ class DataStorageRun(object):
         self.NumberTardy = 0  # Counts the tardy orders
         self.Lateness = list()
 
-        if self.sim.model_panel.CollectPeriodicData:
+        if self.sim.model_panel.COLLECT_PERIODIC_DATA:
             self.PeriodicData = [list()] * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
-
-        self.ContLUMSCORCounter = 0
-        self.QSCounter = 0
-        self.order_input_counter = 0
-        self.order_output_counter = 0
-
 
 #### Collection variables of each experiment ---------------------------------------------------------------------------
 class DataStorageExp(object):
@@ -54,7 +59,13 @@ class DataStorageExp(object):
         self.order_input_counter = 0
         self.order_output_counter = 0
 
-        if self.sim.model_panel.CollectBasicData:
+        # pandas dataframe
+        self.database = None
+        """
+        old method, remove when finished
+        """
+
+        if self.sim.model_panel.COLLECT_BASIC_DATA:
             self.Dat_exp_run = list()
             self.Dat_exp_number_orders = list()
             self.Dat_expUtilization = list()
@@ -72,7 +83,7 @@ class DataStorageExp(object):
             self.Dat_exp_ConLUMSCOR = list()
             self.Dat_exp_QSCounter = list()
 
-            if self.sim.model_panel.CollectStationData:
+            if self.sim.model_panel.COLLECT_STATION_DATA:
                 self.Run_StationGrossThroughputTime_mean_WC = dict()
                 self.Run_Stationpooltime_mean_WC = dict()
                 self.Run_StationThroughputTime_mean_WC = dict()
@@ -87,7 +98,7 @@ class DataStorageExp(object):
                     self.Run_StationThroughputTime_var_WC[WC] = list()
 
 
-        if self.sim.model_panel.CollectFlowData:
+        if self.sim.model_panel.COLLECT_FLOW_DATA:
             self.Dat_exp_flow_WC = list()
             self.Dat_exp_flow_MC = list()
             for i in range(0, 8):
@@ -98,39 +109,76 @@ class DataStorageExp(object):
 
                 self.Dat_exp_flow_WC.append(list_wc)
 
-        if self.sim.model_panel.CollectMachineData:
+        if self.sim.model_panel.COLLECT_MACHINE_DATA:
             self.MachineData = list()
             self.list_tracking = [0] * self.sim.model_panel.NUMBER_OF_MACHINES * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
             self.previous_time = 0
 
-        if self.sim.model_panel.CollectPeriodicData:
+        if self.sim.model_panel.COLLECT_PERIODIC_DATA:
             self.PeriodicData = [[]] * len(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT)
 
-        if self.sim.model_panel.CollectDiscreteData:
+        if self.sim.model_panel.COLLECT_DISCRETE_DATA:
             self.discrete_data = pd.DataFrame({"value": [*range(-50, 301)]})
             self.discrete_data["count"] = 0
 
-        if self.sim.model_panel.CollectOrderData:
+        if self.sim.model_panel.COLLECT_ORDER_DATA:
             self.variable_1 = list()
             self.variable_2 = list()
             self.variable_3 = list()
 
 
 class DataCollection(object):
-    """
-    This class contains all the methods associated with data collection.
-    Depending on the settings the method will be used for data collection.
-    1. Activated by the run_manager()
-        - basic data collection
-        - Periodic data collection
-        - Order data collection
-    2. Activated by the manufacturing_process()
-        - Flow data
-        - Machine data
-    3. Method to empty the sim.model_pannel
-    """
     def __init__(self, simulation):
         self.sim = simulation
+        self.columns_names_run = [
+                            "identifier",
+                            "throughput_time",
+                            "pool_time",
+                            "process_throughput_time",
+                            "lateness",
+                            "tardiness",
+                            "tardy",
+                            ]
+        self.columns_names_exp = [
+                            "mean_throughput_time",
+                            "var_throughput_time",
+                            "mean_pool_time",
+                            "var_pool_time",
+                            "mean_process_throughput_time",
+                            "var_process_throughput_time",
+                            "mean_lateness",
+                            "var_lateness",
+                            "mean_tardiness",
+                            "var_tardiness",
+                            "percentage_tardy",
+                            ]
+
+    def append_run_list(self, result_list):
+        self.sim.data_run.order_list.append(result_list)
+        return
+
+    def store_run_data(self):
+        # put all data into dataframe
+        df_run = pd.DataFrame([self.sim.data_run.order_list])
+        df_run = df_run.transpose()
+        df_run.columns = self.columns_names_run
+
+
+        if self.sim.model_panel.COLLECT_ORDER_DATA and not self.sim.model_panel.COLLECT_ORDER_DATA:
+            df_run = df_run.drop(columns=['identifier'])
+
+            ##### make different dataframe df_run["mean_throughput_time"] = df_run.loc[:, "throughput_time"].mean()
+            df_run["var_throughput_time"] = df_run.loc[:, "throughput_time"].var()
+            df_run = df_run.drop(columns=['throughput_time'])
+
+            df_run["mean_pool_time"] = df_run.loc[:, "pool_time"].mean()
+            df_run["var_pool_time"] = df_run.loc[:, "pool_time"].var()
+
+        if self.sim.data_exp.database is None:
+            self.sim.data_exp.database = df_run
+        else:
+            self.sim.data_exp.database = pd.concat([self.sim.data_exp.database, df_run], ignore_index=True)
+        return
 
     def basic_data_storage(self):
         # declare params
@@ -160,7 +208,7 @@ class DataCollection(object):
         Run_ThroughputTime_var = np.var(self.sim.data_run.ThroughputTime)
 
         # Throughput Time measures (STATION)
-        if self.sim.model_panel.CollectStationData:
+        if self.sim.model_panel.COLLECT_STATION_DATA:
             for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
                 Run_StationGrossThroughputTime_mean[WC] = list()
                 Run_Stationpooltime_mean[WC] = list()
@@ -204,7 +252,7 @@ class DataCollection(object):
         self.sim.data_exp.Dat_exp_ConLUMSCOR.append(self.sim.data_run.ContLUMSCORCounter)
         self.sim.data_exp.Dat_exp_QSCounter.append(self.sim.data_run.QSCounter)
 
-        if self.sim.model_panel.CollectStationData:
+        if self.sim.model_panel.COLLECT_STATION_DATA:
             for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
                 self.sim.data_exp.Run_StationGrossThroughputTime_mean_WC[WC].append(Run_StationGrossThroughputTime_mean[WC])
                 self.sim.data_exp.Run_Stationpooltime_mean_WC[WC].append(Run_Stationpooltime_mean[WC])
@@ -216,7 +264,7 @@ class DataCollection(object):
     def periodic_data_collection(self, sim):
         while True:
             # yield a timeout every periodic time interval
-            yield sim.env.timeout(sim.model_panel.CollectPeriodicData_time_interval)
+            yield sim.env.timeout(sim.model_panel.COLLECT_PERIODIC_DATA_time_interval)
             i = 0
             for WC in sim.model_panel.MANUFACTURING_FLOOR_LAYOUT:
                 workload = sim.model_panel.RELEASED[WC] - sim.model_panel.PROCESSED[WC]

@@ -3,7 +3,7 @@ Project: ProcessSim
 Made By: Arno Kasper
 Version: 1.0.0
 """
-from flow_item import Order
+from flowitem import Order
 import numpy as np
 import pandas as pd
 import random

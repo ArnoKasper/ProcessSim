@@ -25,3 +25,11 @@ class CustomizedSettings(object):
         :return: updated queue_list
         """
         return
+
+    def due_date(self, order):
+        """
+        Define customized version of due date modeling
+        :param order: order object
+        :return:
+        """
+        return

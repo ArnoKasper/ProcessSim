@@ -9,7 +9,7 @@ import random
 import warnings
 import os
 
-import simulation_model as sim
+import simulationmodel as sim
 
 
 class Experiment_Manager(object):
@@ -34,7 +34,7 @@ class Experiment_Manager(object):
         # use a loop to illiterate multiple experiments from the exp_dat list
         for i in range(self.lower, (self.upper + 1)):
             # activate Simulation experiment method
-            self.sim = sim.Simulation_Model(i)
+            self.sim = sim.SimulationModel(i)
             self.sim.sim_function()
 
             # finish the experiment by saving the data and move on to the saving function
@@ -57,7 +57,7 @@ class Experiment_Manager(object):
         df_machine_data = []
         df_periodic = []
 
-        if self.sim.model_panel.CollectBasicData:
+        if self.sim.model_panel.COLLECT_BASIC_DATA:
             df_basic = pd.DataFrame([
                 self.sim.data_exp.Dat_exp_run,
                 self.sim.data_exp.Dat_exp_number_orders,
@@ -95,7 +95,7 @@ class Experiment_Manager(object):
                 "Dat_exp_variable_1",
                 "Dat_exp_variable_2"]
 
-            if self.sim.model_panel.CollectStationData:
+            if self.sim.model_panel.COLLECT_STATION_DATA:
                 database_list = list()
                 # put in the first variable
                 for i, WC in enumerate(self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT):
@@ -122,7 +122,7 @@ class Experiment_Manager(object):
             else:
                 df_basic = df_basic
 
-        if self.sim.model_panel.CollectFlowData:
+        if self.sim.model_panel.COLLECT_FLOW_DATA:
             df_wc_flow = pd.DataFrame([self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT,
                                        self.sim.data_exp.Dat_exp_flow_WC[0],
                                        self.sim.data_exp.Dat_exp_flow_WC[1],
@@ -144,13 +144,13 @@ class Experiment_Manager(object):
                 "Machine 1",
                 "Machine 2"
             ]
-        if self.sim.model_panel.CollectMachineData:
+        if self.sim.model_panel.COLLECT_MACHINE_DATA:
             df_machine_data = pd.DataFrame([self.sim.data_exp.MachineData[0]])
             for i in range(1, len(self.sim.data_exp.MachineData)):
                 between = pd.DataFrame([self.sim.data_exp.MachineData[i]])
                 df_machine_data = pd.concat([between, df_machine_data], ignore_index=True)
 
-        if self.sim.model_panel.CollectPeriodicData:
+        if self.sim.model_panel.COLLECT_PERIODIC_DATA:
             df_periodic = pd.DataFrame([self.sim.data_exp.PeriodicData[0]])
             for i in range(1, len(self.sim.data_exp.PeriodicData)):
                 between = pd.DataFrame([self.sim.data_exp.PeriodicData[i]])
@@ -165,7 +165,7 @@ class Experiment_Manager(object):
                 "WC5",
                 "WC6"
             ]
-        if self.sim.model_panel.CollectOrderData:
+        if self.sim.model_panel.COLLECT_ORDER_DATA:
             # create name string
             lenght_name = len(self.sim.data_exp.variable_1)
             name_list = [self.sim.model_panel.experiment_name] * lenght_name
@@ -195,7 +195,7 @@ class Experiment_Manager(object):
 
         save_list = []
 
-        if self.sim.model_panel.CollectBasicData or self.sim.model_panel.CollectStationData:
+        if self.sim.model_panel.COLLECT_BASIC_DATA or self.sim.model_panel.COLLECT_STATION_DATA:
             name_and_data_list = []
             save_exp_name = exp_name
 
@@ -205,7 +205,7 @@ class Experiment_Manager(object):
             # Put data frame and name in list
             save_list.append(name_and_data_list)
 
-        if self.sim.model_panel.CollectFlowData:
+        if self.sim.model_panel.COLLECT_FLOW_DATA:
             name_and_data_list = []
             save_exp_name = "FLOW_" + exp_name
 
@@ -215,7 +215,7 @@ class Experiment_Manager(object):
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
 
-        if self.sim.model_panel.CollectOrderData:
+        if self.sim.model_panel.COLLECT_ORDER_DATA:
             name_and_data_list = []
             save_exp_name = "ORDER_" + exp_name
 
@@ -225,7 +225,7 @@ class Experiment_Manager(object):
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
 
-        if self.sim.model_panel.CollectMachineData:
+        if self.sim.model_panel.COLLECT_MACHINE_DATA:
             name_and_data_list = []
             save_exp_name = "MACHINE_" + exp_name
 
@@ -234,7 +234,7 @@ class Experiment_Manager(object):
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
 
-        if self.sim.model_panel.CollectPeriodicData:
+        if self.sim.model_panel.COLLECT_PERIODIC_DATA:
             name_and_data_list = []
             save_exp_name = "PERIODIC_" + exp_name
 
@@ -244,7 +244,7 @@ class Experiment_Manager(object):
             # Put dataframe and name in list
             save_list.append(name_and_data_list)
 
-        if self.sim.model_panel.CollectDiscreteData:
+        if self.sim.model_panel.COLLECT_DISCRETE_DATA:
             name_and_data_list = []
             save_exp_name = "DISCRETE_" + exp_name
 

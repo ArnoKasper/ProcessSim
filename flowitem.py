@@ -10,9 +10,11 @@ class Order(object):
         """
         object having all attributes of the an flow item
         :param simulation: simulation object stored in simulation_model.py
+        :return: void
         """
         # Set up individual parameters for each order ------------------------------------------------------------------
         self.sim = simulation
+        self.customized_control = self.sim.model_panel.CUSTOM_CONTROL
 
         # CEM params
         self.entry_time = 0
@@ -79,7 +81,9 @@ class Order(object):
             self.machine_route[WC] = "NOT_PASSED"
 
         # Due Date -----------------------------------------------------------------------------------------------------
-        if self.sim.policy_panel.due_date_method == "random":
+        if self.customized_control:
+            self.sim.customized_settings.due_date(order=self)
+        elif self.sim.policy_panel.due_date_method == "random":
             self.due_date = self.sim.general_functions.random_value_DD()
         elif self.sim.policy_panel.due_date_method == "factor_k":
             self.due_date = self.sim.general_functions.factor_K_DD(order=self)
@@ -96,13 +100,11 @@ class Order(object):
             self.ODDs[WC] = self.due_date - (
                     (len(self.routing_sequence) - (self.routing_sequence.index(WC) + 1)) * self.sim.policy_panel.ODD_k)
 
-        # Other order paramaters ---------------------------------------------------------------------------------------
+        # Other order parameters ---------------------------------------------------------------------------------------
         # data collection
         self.finishing_time = 0
 
         # Other
-        self.queue_switched = False
-        self.released_to_queue = "X"
         self.continuous_trigger = False
         self.dispatching_priority = 0
         return

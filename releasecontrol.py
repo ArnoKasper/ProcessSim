@@ -9,6 +9,7 @@ class ReleaseControl(object):
     def __init__(self, simulation):
         self.sim = simulation
         self.pool = self.sim.model_panel.ORDER_POOL
+        self.customized_control = self.sim.model_panel.CUSTOM_CONTROL
 
     def order_pool(self, order):
         """
@@ -16,14 +17,14 @@ class ReleaseControl(object):
         :param order: order object found in order.py
         """
         # Set the priority for each job
-        if self.sim.policy_panel.sequencing_rule == "FCFS":
+        if self.customized_control:
+            seq_priority = self.sim.customized_settings.pool_seq_rule()
+        elif self.sim.policy_panel.sequencing_rule == "FCFS":
             seq_priority = order.id
         elif self.sim.policy_panel.sequencing_rule == "SPT":
             seq_priority = list(order.process_time.values())[0]
         elif self.sim.policy_panel.sequencing_rule == "PRD":
             seq_priority = order.PRD
-        elif self.sim.policy_panel.sequencing_rule == "Customized":
-            seq_priority = self.sim.customized_settings.pool_seq_rule()
         else:
             raise Exception('No sequencing rule in the pool selected')
 
@@ -197,7 +198,7 @@ class ReleaseControl(object):
             return
             yield
 
-    def continuous_trigger_activation(self, order, work_center):
+    def continuous_trigger_activation(self, work_center):
         """
         feedback mechanism for continuous release
         :param work_center:
@@ -309,5 +310,5 @@ class ReleaseControl(object):
                     order.routing_sequence_data.index(work_center) + 1)
         # continuous trigger LUMS COR
         if self.sim.policy_panel.release_control_method == "LUMS_COR":
-            self.sim.release_control.continuous_trigger_activation(order=order, work_center=work_center)
+            self.sim.release_control.continuous_trigger_activation(work_center=work_center)
         return

@@ -4,7 +4,7 @@ Made By: Arno Kasper
 Version: 1.0.0
 """
 from operator import itemgetter
-
+import pandas as pd
 
 class Process(object):
     def __init__(self, simulation):
@@ -14,7 +14,7 @@ class Process(object):
         """
         self.sim = simulation
         self.dispatching_rule = self.sim.policy_panel.dispatching_rule
-        self.dispatching_mode = self.sim.policy_panel.dispatching_mode
+        self.customized_control = self.sim.model_panel.CUSTOM_CONTROL
 
     def put_in_queue(self, order):
         """
@@ -72,14 +72,14 @@ class Process(object):
         3: release index
         """
         # select dispatching rule
-        if self.dispatching_rule == "FCFS":
+        if self.customized_control:
+            order.dispatching_priority = self.sim.customized_settings.queue_priority(order=order)
+        elif self.dispatching_rule == "FCFS":
             order.dispatching_priority = order.identifier
         elif self.dispatching_rule == "SPT":
             order.dispatching_priority = order.process_time[order.routing_sequence[0]]
         elif self.dispatching_rule == "ODD":
             order.dispatching_priority = order.ODDs[order.routing_sequence[0]]
-        elif self.dispatching_rule == "Custom":
-            order.dispatching_priority = self.sim.customized_settings.queue_priority(order=order)
         else:
             raise Exception("no valid dispatching rule defined")
 
@@ -126,7 +126,7 @@ class Process(object):
             return None, True, False
 
         # update priorities if required
-        if self.dispatching_mode == "customized":
+        if self.customized_control:
             queue_list = self.sim.model_panel.ORDER_QUEUES[work_center].items
             self.sim.customized_settings.dispatching_mode(queue_list=queue_list)
 
@@ -214,7 +214,7 @@ class Process(object):
         self.sim.data_run.Number += 1
         self.sim.data_run.CalculateUtiliz += order.process_time_cumulative
 
-        if self.sim.model_panel.CollectBasicData:
+        if self.sim.model_panel.COLLECT_BASIC_DATA:
             self.sim.data_run.GrossThroughputTime.append(order.finishing_time - order.entry_time)
             self.sim.data_run.pooltime.append(order.pool_time)
             self.sim.data_run.ThroughputTime.append(order.finishing_time - order.release_time)
@@ -227,25 +227,72 @@ class Process(object):
             self.sim.data_run.Tardiness.append(mean_tardiness)
             self.sim.data_run.CumTardiness += mean_tardiness
             # Collection station data
-            if self.sim.model_panel.CollectStationData:
+            if self.sim.model_panel.COLLECT_STATION_DATA:
                 self.sim.data_collection.station_data_collection(order=order)
 
         # Collect order data
-        if self.sim.model_panel.CollectOrderData:
+        if self.sim.model_panel.COLLECT_ORDER_DATA:
             self.sim.data_collection.order_data_collection(order=order)
 
         # Collect flow data
-        if self.sim.model_panel.CollectFlowData:
+        if self.sim.model_panel.COLLECT_FLOW_DATA:
             self.sim.data_collection.DataCollection.flow_data_collection(sim=self.sim)
 
         # collect tracking data
-        if self.sim.model_panel.CollectMachineData:
+        if self.sim.model_panel.COLLECT_MACHINE_DATA:
             self.sim.data_collection.machine_data_collection(sim=self.sim)
 
         # collect discrete data
-        if self.sim.model_panel.CollectDiscreteData and not self.sim.warm_up:
+        if self.sim.model_panel.COLLECT_DISCRETE_DATA and not self.sim.warm_up:
             value = order.finishing_time - order.due_date
             self.sim.data_collection.discrete_data_collection(sim=self.sim, value=value)
 
         self.sim.data_exp.order_output_counter += 1
         return
+
+    def data_collection_final_new(self, order):
+        """
+        Collect data finished order
+        :param order: order object
+        :return: void
+        
+        key list
+            0: identifier
+            1: throughput_time
+            2: pool_time
+            3: process_throughput_time
+            4: lateness
+            5: tardiness
+            6: tardy
+        """
+        # the finishing time
+        order.finishing_time = self.sim.env.now
+
+        # General data collection
+        self.sim.data_run.Number += 1
+        self.sim.data_run.CalculateUtiliz += order.process_time_cumulative
+
+        if self.sim.model_panel.COLLECT_BASIC_DATA:
+            df_list = list()
+            df_list.append(order.identifier)
+            df_list.append(order.finishing_time - order.entry_time)
+            df_list.append(order.pool_time)
+            df_list.append(order.finishing_time - order.release_time)
+            df_list.append(order.finishing_time - order.due_date)
+            df_list.append(max(0, (order.finishing_time - order.due_date)))
+            df_list.append(max(0, self.heavenside(x=(order.finishing_time - order.due_date))))
+
+            if self.sim.model_panel.COLLECT_STATION_DATA:
+                """
+                extend the list with additional parameters relating routing
+                """
+                df_list.extend(self.sim.data_collection.station_data_collection(order=order))
+
+            # save list
+
+        return
+
+    def heavenside(self, x):
+        if x < 0:
+            return 1
+        return -1
