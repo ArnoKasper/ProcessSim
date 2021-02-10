@@ -4,9 +4,10 @@ Made By: Arno Kasper
 Version: 1.0.0
 """
 # set code and import libraries ----------------------------------------------------------------------------------------
-from __future__ import annotations
 from simpy import Environment, FilterStore, PriorityResource, Event
 from random import Random
+import numpy as np
+from scipy import stats
 from typing import cast, Dict, List, Optional, Tuple, Type, Generator
 
 #Generator[yield_type, send_type, return_type]
@@ -17,7 +18,8 @@ from data_collection_and_storage import DataCollection, DataStorageRun, DataStor
 from generalfunctions import GeneralFunctions
 from simsource import Source
 from process import Process
-from customizedsettings import CustomizedSettings
+#from customizedsettings import CustomizedSettings
+from pp_02 import CustomizedSettings
 from releasecontrol import ReleaseControl
 
 class SimulationModel(object):
@@ -82,16 +84,13 @@ class SimulationModel(object):
                     self.policy_panel.release_control_method == "pure_periodic":
                 self.release_periodic: Process[Event, None, None] = \
                     self.env.process(self.release_control.periodic_release())
-                #print("PERIODIC RELEASE OFF")
 
         # initialize processes
         self.source_process: Process[Event, None, None] = self.env.process(self.source.generate_random_arrival_exp())
 
         # activate data collection methods
         if self.model_panel.COLLECT_BASIC_DATA or \
-                self.model_panel.COLLECT_PERIODIC_DATA or \
-                self.model_panel.COLLECT_ORDER_DATA or \
-                self.model_panel.COLLECT_DISCRETE_DATA:
+                self.model_panel.COLLECT_ORDER_DATA:
             self.run_manager: Process[Event, None, None] = self.env.process(SimulationModel.run_manager(self))
 
         # set the the length of the simulation (add one extra time unit to save result last run)
@@ -118,35 +117,21 @@ class SimulationModel(object):
                 self.model_panel.WARM_UP_PERIOD + self.model_panel.RUN_TIME) * self.model_panel.NUMBER_OF_RUNS:
             yield self.env.timeout(self.model_panel.WARM_UP_PERIOD)
             # chance the warm_up status
-            self.warm_up = False
+            self.warm_up = True
 
             # print run info if required
             if self.print_info:
                 self.print_warmup_info()
 
-            # remove warm-up period data collection
-            if self.model_panel.COLLECT_BASIC_DATA:
-                self.data_run: DataStorageRun = DataStorageRun(sim=self)
-
-            if self.model_panel.COLLECT_ORDER_DATA:
-                self.data_exp: DataStorageExp = DataStorageExp(sim=self)
+            # update data
+            self.data_collection.run_update(warmup=self.warm_up)
 
             yield self.env.timeout(self.model_panel.RUN_TIME)
             # chance the warm_up status
-            self.warm_up = True
+            self.warm_up = False
 
-            # activate data collection
-            if self.model_panel.COLLECT_BASIC_DATA:
-                # store the run data
-                self.data_collection.basic_data_storage()
-
-                # clear the run data
-                self.data_run: DataStorageRun = DataStorageRun(sim=self)
-
-            # activate the periodic monitoring process if applicable
-            if self.model_panel.COLLECT_PERIODIC_DATA:
-                self.data_collection.periodic_data_collection()
-                raise Exception("periodic data collection not implemented")
+            # update data
+            self.data_collection.run_update(warmup=self.warm_up)
 
             # print run info if required
             if self.print_info and self.model_panel.COLLECT_BASIC_DATA:
@@ -167,22 +152,28 @@ class SimulationModel(object):
         run_number = int(self.env.now / (self.model_panel.WARM_UP_PERIOD + self.model_panel.RUN_TIME))
         index = run_number - 1
 
-        # print info
-        print(
-            f'Run number: {run_number}'
-            f'\nResults for this run:'
-            f'\n\tMean lead time:                     {self.data_exp.Dat_exp_GrossThroughputTime_mean[index]}'
-            f'\n\tVariance lead time:                 {self.data_exp.Dat_exp_GrossThroughputTime_var[index]}'
-            f'\n\tMean shop throughput time:          {self.data_exp.Dat_exp_ThroughputTime_mean[index]}'
-            f'\n\t% Tardy:                            {round(self.data_exp.Dat_exp_percentageTardy[index], 6) * 100}%'
-            f'\n\tMean Tardiness:                     {self.data_exp.Dat_exp_Tardiness_mean[index]}'
-            f'\n\tMean Lateness:                      {self.data_exp.Dat_exp_Lateness_mean[index]}'
-            f'\n\tUtilization:                        {round(self.data_exp.Dat_expUtilization[index], 6)}%'
-        )
+        # make progress bar
+        progress = "["
+        step = 100/self.model_panel.NUMBER_OF_RUNS
 
-        # print additional info for LUMS_COR release
-        if self.policy_panel.release_control_method == "LUMS_COR" and self.policy_panel.release_control:
-            print(f'\tContinuous trigger LUMSCOR number:  {self.data_exp.Dat_exp_ConLUMSCOR[index]} times')
+        for i in range(1, 101):
+            if run_number * step >= i:
+                progress = progress + "="
+            else:
+                progress = progress + " "
+        progress = progress + f"] {round(run_number/self.model_panel.NUMBER_OF_RUNS*100,2)}%"
+
+        # compute replication confidence
+        current_sum = self.data_exp.database.loc[:,"mean_throughput_time"].sum()
+        current_variance = self.data_exp.database.loc[:,"mean_throughput_time"].var()
+        confidence_int = current_sum -  stats.t.ppf(1-0.025,df=self.data_exp.database.shape[0]-1) *\
+                         (current_variance / np.sqrt(run_number))
+        deviation = f"replication confidence: p < {round((current_sum - confidence_int) /current_sum*100, 6)}%"
+        print(f"run number {run_number}", progress, deviation)
+
+        # print info
+        print(self.data_exp.database.iloc[index:,[0,2,3,4,7,9,11,
+                                                  *range(13, self.data_exp.database.shape[1])]].to_string(index=False))
         return
 
     def print_end_info(self) -> None:

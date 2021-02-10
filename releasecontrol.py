@@ -17,16 +17,19 @@ class ReleaseControl(object):
         :param order: order object found in order.py
         """
         # Set the priority for each job
+        seq_priority = None
         if self.customized_control:
-            seq_priority = self.sim.customized_settings.pool_seq_rule()
-        elif self.sim.policy_panel.sequencing_rule == "FCFS":
-            seq_priority = order.id
-        elif self.sim.policy_panel.sequencing_rule == "SPT":
-            seq_priority = list(order.process_time.values())[0]
-        elif self.sim.policy_panel.sequencing_rule == "PRD":
-            seq_priority = order.PRD
-        else:
-            raise Exception('No sequencing rule in the pool selected')
+            seq_priority = self.sim.customized_settings.pool_seq_rule(order=order)
+
+        if seq_priority is None:
+            if self.sim.policy_panel.sequencing_rule == "FCFS":
+                seq_priority = order.id
+            elif self.sim.policy_panel.sequencing_rule == "SPT":
+                seq_priority = list(order.process_time.values())[0]
+            elif self.sim.policy_panel.sequencing_rule == "PRD":
+                seq_priority = order.PRD
+            else:
+                raise Exception('No sequencing rule in the pool selected')
 
         # Put each job in the pool
         job = [order, seq_priority, 1]

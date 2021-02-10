@@ -23,7 +23,7 @@ class ModelPanel(object):
         # simulation parameters-----------------------------------------------------------------------------------------
         self.WARM_UP_PERIOD: int = 3000    # warm-up period simulation model
         self.RUN_TIME: int = 10000         # run time simulation model
-        self.NUMBER_OF_RUNS: int = 100     # number of replications
+        self.NUMBER_OF_RUNS: int = 10#0     # number of replications
 
         # Manufacturing process and order characteristics---------------------------------------------------------------
         self.NUMBER_OF_WORKCENTRES: int = 6
@@ -88,18 +88,12 @@ class ModelPanel(object):
         # Activate the appropriate data collection methods -------------------------------------------------------------
         self.COLLECT_BASIC_DATA: bool = True
         self.COLLECT_STATION_DATA: bool = False
-        self.COLLECT_FLOW_DATA: bool = False
         self.COLLECT_ORDER_DATA: bool = False
-        self.COLLECT_MACHINE_DATA: bool = False
-        self.COLLECT_PERIODIC_DATA: bool = False
-        self.COLLECT_PERIODIC_DATA_time_interval: float = 0.2
-        self.COLLECT_DISCRETE_DATA: bool = False
 
         # Control how the model is used
         self.EXPERIMENT_MANAGER: bool = True
         self.NON_STATIONARY_CONTROL: bool = False
-        self.CUSTOM_CONTROL: bool = False
-
+        self.CUSTOM_CONTROL: bool = True
 
 class PolicyPanel(object):
     def __init__(self, experiment_number: int) -> None:
@@ -150,8 +144,8 @@ class PolicyPanel(object):
         self.PRD_k: int = 6  # Factor K for PRD calculations
 
         # release control method
-        self.release_control: bool = True
-        self.release_norm: int = 5
+        self.release_control: bool = False
+        self.release_norm: int = 8
         self.release_control_method: str = "LUMS_COR"
 
         # LUMS COR
@@ -167,5 +161,5 @@ class PolicyPanel(object):
             - ODD, following Land et al. (2014)
         """
         # Dispatching rules
-        self.dispatching_rule: str = "FCFS"  # "SPT"
+        self.dispatching_rule: str = "ODD"  # "SPT"
         self.ODD_k: int = 7
