@@ -14,16 +14,16 @@ class ModelPanel(object):
         self.experiment_number: int = experiment_number
         self.sim: ClassVar = simulation
         self.print_info: bool = True
-        self.params_list: List[...] = parameters.experimental_params_list
-        self.project_name: str = "Na"
-        self.experiment_name: str = "Na"
+        self.params_list: List[...] = parameters.experimental_params_list[self.experiment_number]
+        self.project_name: str = "Thesis"
+        self.experiment_name: str = f"{self.params_list[5]}_{self.params_list[4]}_{self.params_list[3]}_{self.params_list[2]}"
         self.general_functions: GeneralFunctions = GeneralFunctions(simulation=self.sim)
 
         # general variables and experimental factors
         # simulation parameters-----------------------------------------------------------------------------------------
         self.WARM_UP_PERIOD: int = 3000    # warm-up period simulation model
         self.RUN_TIME: int = 10000         # run time simulation model
-        self.NUMBER_OF_RUNS: int = 10#0     # number of replications
+        self.NUMBER_OF_RUNS: int = 1#00     # number of replications
 
         # Manufacturing process and order characteristics---------------------------------------------------------------
         self.NUMBER_OF_WORKCENTRES: int = 6
@@ -49,7 +49,7 @@ class ModelPanel(object):
             3. PFS: pure flow shop
             4. PJS: pure job shop 
         """
-        self.WC_AND_FLOW_CONFIGURATION: str = 'GFS'  # 'RJS'
+        self.WC_AND_FLOW_CONFIGURATION: str = self.params_list[3] # 'GFS' # 'RJS' #
 
         # process and arrival times
         """
@@ -60,11 +60,11 @@ class ModelPanel(object):
             - 2_erlang:     2-Erlang Distribution 
             - constant:     constant process time value
         """
-        self.PROCESS_TIME_DISTRIBUTION: str = "2_erlang"
+        self.PROCESS_TIME_DISTRIBUTION: str = "2_erlang" # "lognormal" #
         self.AIMED_UTILIZATION: float = 0.9
         self.MEAN_PROCESS_TIME: int = 1  # mean process time for this simulation
-        self.STD_DEV_PROCESS_TIME: int = 1  # Standard deviation for this simulation
-        self.TRUNCATION_POINT_PROCESS_TIME: int = 4  # "inf"  # Truncation point process time
+        self.STD_DEV_PROCESS_TIME: float = 0.5  # Standard deviation for this simulation
+        self.TRUNCATION_POINT_PROCESS_TIME: any = 4 # "inf" #  # Truncation point process time
         # Calculate mean time between arrival
         # (mean amount of machines/amount of machines/utilization * 1 / amount of machines)
 
@@ -98,29 +98,28 @@ class ModelPanel(object):
 class PolicyPanel(object):
     def __init__(self, experiment_number: int) -> None:
         self.experiment_number: int = experiment_number
-        self.params_list: List[...] = parameters.experimental_params_list
+        self.params_list: List[...] = parameters.experimental_params_list[self.experiment_number]
 
         # customer enquiry management - Due Date determination ---------------------------------------------------------
         """
         - key for the due date procedure
             -   random: adds a random Due Date with a uniform continuous distribution
                     Location: GeneralFunctions.random_value_DD
-        
+                
             -   factor_k: adds a due date following the factor K approach
                     Location: GeneralFunctions.random_value_DD
-        
+                
             -   constant: adds a constant due date to the cumulative process time
-                    Location: GeneralFunctions.add_contant_DD 
-            
-            - total_work_content: mutiplies the process time with a constant
+                    Location: GeneralFunctions.add_constant_DD 
+                
+            -   total_work_content: multiplies the process time with a constant
                     Location: GeneralFunctions.total_work_content
         """
-
         self.due_date_method: str = 'total_work_content'
         self.DD_random_min_max: List[int, int] = [28, 36]  # Due Dates intervals
         self.DD_factor_K_value: int = 12  # Due Date factor K
-        self.DD_constant_value: int = 20  # Due Date adding constant
-        self.DD_total_work_content_value: int = 10
+        self.DD_constant_value: int = 30  # Due Date adding constant
+        self.DD_total_work_content_value: int = 9
 
         # Release control ----------------------------------------------------------------------------------------------
         """
@@ -144,8 +143,8 @@ class PolicyPanel(object):
         self.PRD_k: int = 6  # Factor K for PRD calculations
 
         # release control method
-        self.release_control: bool = False
-        self.release_norm: int = 8
+        self.release_control: bool = False #self.params_list[0]
+        self.release_norm: float = 5
         self.release_control_method: str = "LUMS_COR"
 
         # LUMS COR
@@ -157,9 +156,10 @@ class PolicyPanel(object):
         Dispatching rules available
             - FCFS
             - SPT
-            - OOD, k 
-            - ODD, following Land et al. (2014)
+            - ODD_k, following Land et al. (2014)
+            - ODD_land, following Land et al. (2014)
+            - MODD
         """
         # Dispatching rules
-        self.dispatching_rule: str = "ODD"  # "SPT"
+        self.dispatching_rule: str = "SPT" #self.params_list[4]  #"MODD" #"ODD_land"  # "SPT"
         self.ODD_k: int = 7

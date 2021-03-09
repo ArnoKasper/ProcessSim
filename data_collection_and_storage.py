@@ -99,6 +99,10 @@ class DataCollection(object):
                     df[f"mean_queue_time_wc{i}"] = df_run.loc[:, f"queue_time_wc{i}"].mean()
                     df[f"var_queue_time_wc{i}"] = df_run.loc[:, f"queue_time_wc{i}"].var()
 
+        if self.sim.model_panel.CUSTOM_CONTROL:
+            df_extra = self.sim.customized_settings.add_additional_measures(df_run=df_run).reset_index(drop=True)
+            df = pd.concat([df, df_extra], axis=1)
+
         # save data from the run
         if self.sim.data_exp.database is None:
             self.sim.data_exp.database = df

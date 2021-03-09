@@ -155,18 +155,19 @@ class GeneralFunctions(object):
                 order.ODDs[WC] = self.sim.env.now
         return
 
-    def MODD_load_control(self, order, work_center):
+    def MODD_load_control(self, queue_list, work_center):
         """
         Update following MODD by Baker & Kenet (1988)
         :param order:
         :param work_center:
         """
         # get the orders from the queue
-        for i, order_queue in enumerate(order.work_center_RQ.queue):
-            order_queue.priority = max(self.sim.env.now + order_queue.order.process_time[work_center], order_queue.priority)
-            order_queue.order.dispatching_priority = max(self.sim.env.now + order_queue.order.process_time[work_center],
-                                                         order_queue.priority)
-        # sort the queue
-        order.work_center_RQ.queue.sort(key=lambda order_queue: order_queue.priority)
-        return
+        for i, order_queue in enumerate(queue_list):
+            result_MODD = max(
+                (self.sim.env.now + order_queue[0].process_time[work_center]),
+                order_queue[0].ODDs[work_center]
+            )
+            order_queue[0].dispatching_priority[work_center] = result_MODD
+            order_queue[1] = result_MODD
+        return queue_list
 

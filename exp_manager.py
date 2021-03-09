@@ -49,7 +49,6 @@ class Experiment_Manager(object):
         :param exp_variable_list:
         :return:
         """
-        ##### Create a database-----------------------------------------------------------------------------------------
         # initialize params
         df = self.sim.data_exp.database
         file_version = ".csv"  # ".xlsx"#".csv"#
@@ -58,9 +57,7 @@ class Experiment_Manager(object):
         path = self.get_directory()
 
         # create the experimental name
-        exp_name = ""
-        for i, string in enumerate(exp_variable_list):
-            exp_name = exp_name + str(string) + "_"
+        exp_name = self.sim.model_panel.experiment_name
 
         # save file
         file = path + exp_name + file_version

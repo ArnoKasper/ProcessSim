@@ -18,8 +18,7 @@ from data_collection_and_storage import DataCollection, DataStorageRun, DataStor
 from generalfunctions import GeneralFunctions
 from simsource import Source
 from process import Process
-#from customizedsettings import CustomizedSettings
-from pp_02 import CustomizedSettings
+from customizedsettings import CustomizedSettings
 from releasecontrol import ReleaseControl
 
 class SimulationModel(object):
@@ -39,9 +38,6 @@ class SimulationModel(object):
 
         # import the Simpy environment
         self.env: Environment = Environment()
-
-        # add the customized settings
-        self.customized_settings: CustomizedSettings = CustomizedSettings(simulation=self)
 
         # add general functionality to the model
         self.general_functions: GeneralFunctions = GeneralFunctions(simulation=self)
@@ -66,6 +62,9 @@ class SimulationModel(object):
 
         # import process
         self.process: Process = Process(simulation=self)
+
+        # add the customized settings
+        self.customized_settings: CustomizedSettings = CustomizedSettings(simulation=self)
 
         # declare variables
         self.release_periodic: any = "declare"
@@ -157,22 +156,24 @@ class SimulationModel(object):
         step = 100/self.model_panel.NUMBER_OF_RUNS
 
         for i in range(1, 101):
-            if run_number * step >= i:
+            if run_number * step > i:
                 progress = progress + "="
+            elif run_number * step == i:
+                progress = progress + ">"
             else:
-                progress = progress + " "
+                progress = progress + "."
         progress = progress + f"] {round(run_number/self.model_panel.NUMBER_OF_RUNS*100,2)}%"
 
         # compute replication confidence
         current_sum = self.data_exp.database.loc[:,"mean_throughput_time"].sum()
         current_variance = self.data_exp.database.loc[:,"mean_throughput_time"].var()
-        confidence_int = current_sum -  stats.t.ppf(1-0.025,df=self.data_exp.database.shape[0]-1) *\
+        confidence_int = current_sum - stats.t.ppf(1-0.025,df=self.data_exp.database.shape[0]-1) *\
                          (current_variance / np.sqrt(run_number))
         deviation = f"replication confidence: p < {round((current_sum - confidence_int) /current_sum*100, 6)}%"
         print(f"run number {run_number}", progress, deviation)
 
         # print info
-        print(self.data_exp.database.iloc[index:,[0,2,3,4,7,9,11,
+        print(self.data_exp.database.iloc[index:,[0,2,3,4,7,9,10,11,
                                                   *range(13, self.data_exp.database.shape[1])]].to_string(index=False))
         return
 

@@ -31,6 +31,9 @@ class Process(object):
             order.release_time = self.sim.env.now
             order.pool_time = order.release_time - order.entry_time
             order.first_entry = False
+            # update ODDs
+            if self.sim.policy_panel.dispatching_rule == "ODD_land" or "MODD":
+                self.sim.general_functions.ODD_land_adaption(order=order)
 
         # get work centre
         work_centre = order.routing_sequence[0]
@@ -87,8 +90,8 @@ class Process(object):
                 order.dispatching_priority[work_centre] = order.identifier
             elif self.dispatching_rule == "SPT":
                 order.dispatching_priority[work_centre] = order.process_time[order.routing_sequence[0]]
-            elif self.dispatching_rule == "ODD":
-                order.dispatching_priority[work_centre] = order.ODDs[order.routing_sequence[0]]
+            elif self.dispatching_rule == "ODD_land" or self.dispatching_rule == "ODD_k" or self.dispatching_rule == "MODD":
+                order.dispatching_priority[work_centre] = order.ODDs[work_centre]
             else:
                 raise Exception("no valid dispatching rule defined")
 
@@ -130,6 +133,7 @@ class Process(object):
         # setup params
         priority_list = list()
         queue_list = None
+        changed = False
 
         # if there are no items in the queue, return
         if len(self.sim.model_panel.ORDER_QUEUES[work_centre].items) == 0:
@@ -138,10 +142,13 @@ class Process(object):
         # update priorities if required
         if self.customized_control:
             queue_list = self.sim.model_panel.ORDER_QUEUES[work_centre].items
-            self.sim.customized_settings.dispatching_mode(queue_list=queue_list, work_centre=work_centre)
+            queue_list, changed = self.sim.customized_settings.dispatching_mode(queue_list=queue_list, work_centre=work_centre)
 
-        if queue_list is None:
+        if not changed:
             queue_list = self.sim.model_panel.ORDER_QUEUES[work_centre].items
+            # update queue list if required
+            if self.dispatching_rule == "MODD":
+                queue_list = self.sim.general_functions.MODD_load_control(queue_list=queue_list, work_center=work_centre)
 
         # find most urgent order in the queue
         for i, order_list in enumerate(queue_list):
@@ -170,6 +177,7 @@ class Process(object):
         order.work_center_RQ = self.sim.model_panel.MANUFACTURING_FLOOR[work_centre]
         req = order.work_center_RQ.request(priority=order.dispatching_priority[work_centre])
         req.self = order
+        order.order_start_time[work_centre] = self.sim.env.now
 
         # yield a request
         with req as req:
@@ -207,7 +215,6 @@ class Process(object):
         :param work_center: work_center number indicating the number of the capacity source
         :return: void
         """
-        order.order_start_time[work_center] = self.sim.env.now - order.process_time[work_center]
         order.proc_finished_time[work_center] = self.sim.env.now
         order.queue_time[work_center] = order.order_start_time[work_center] - order.queue_entry_time[work_center]
         return

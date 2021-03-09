@@ -36,7 +36,7 @@ class Order(object):
                 self.routing_sequence.sort()  # GFS or PFS require sorted list of stations
 
         elif self.sim.model_panel.WC_AND_FLOW_CONFIGURATION == "PFS":
-            self.routing_sequence = self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT
+            self.routing_sequence = self.sim.model_panel.MANUFACTURING_FLOOR_LAYOUT.copy()
 
         elif self.sim.model_panel.WC_AND_FLOW_CONFIGURATION == "PJS":
             self.routing_sequence = \
@@ -104,9 +104,10 @@ class Order(object):
 
         self.PRD = self.due_date - (len(self.routing_sequence) * self.sim.policy_panel.PRD_k)
         self.ODDs = {}
-        for WC in self.routing_sequence:
-            self.ODDs[WC] = self.due_date - (
-                    (len(self.routing_sequence) - (self.routing_sequence.index(WC) + 1)) * self.sim.policy_panel.ODD_k)
+        if self.sim.policy_panel.dispatching_rule == "ODD_k":
+            for WC in self.routing_sequence:
+                self.ODDs[WC] = self.due_date - (
+                        (len(self.routing_sequence) - (self.routing_sequence.index(WC) + 1)) * self.sim.policy_panel.ODD_k)
 
         # Other order parameters ---------------------------------------------------------------------------------------
         # data collection

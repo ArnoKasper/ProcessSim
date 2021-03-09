@@ -23,7 +23,7 @@ class ReleaseControl(object):
 
         if seq_priority is None:
             if self.sim.policy_panel.sequencing_rule == "FCFS":
-                seq_priority = order.id
+                seq_priority = order.identifier
             elif self.sim.policy_panel.sequencing_rule == "SPT":
                 seq_priority = list(order.process_time.values())[0]
             elif self.sim.policy_panel.sequencing_rule == "PRD":

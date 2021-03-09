@@ -1,6 +1,14 @@
+from operator import itemgetter
+import numpy as np
+import pandas as pd
+
 class CustomizedSettings(object):
     def __init__(self, simulation):
         self.sim = simulation
+
+    def add_additional_measures(self, df_run):
+        df_additional_measures = pd.DataFrame([])
+        return df_additional_measures
 
     def pool_seq_rule(self, order):
         """
